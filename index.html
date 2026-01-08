@@ -13,6 +13,11 @@
         href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Outfit:wght@300;400;500;600&display=swap"
         rel="stylesheet">
     <link rel="stylesheet" href="index.css">
+    <script>
+        // Early redirect if not "logged in" (using a simple session check or just let app.js handle it)
+        // But for better UX, we can check a flag or just let app.js do the heavy lifting.
+        // For now, let's just make sure the app.js is ready.
+    </script>
 </head>
 
 <body>
@@ -57,7 +62,6 @@
 
             <div class="sidebar-footer">
                 <div id="user-section" class="user-section">
-                    <button id="auth-btn" class="auth-btn">Login</button>
                     <div id="user-info" class="user-info hidden">
                         <div class="user-meta">
                             <span id="user-email" class="user-email"></span>
@@ -101,27 +105,6 @@
             </div>
         </section>
     </main>
-
-    <!-- Auth Modal -->
-    <div id="auth-modal" class="modal-overlay">
-        <div class="modal-content glass">
-            <h2 id="auth-title">Welcome Back</h2>
-            <p id="auth-desc">Login to sync your tasks across devices.</p>
-            <p id="auth-restrict" class="auth-notice">Only @servicenow.com accounts allowed.</p>
-
-            <div class="auth-form">
-                <input type="email" id="auth-email" placeholder="Email" autocomplete="username">
-                <input type="password" id="auth-password" placeholder="Password" autocomplete="current-password">
-                <p id="auth-error-msg" class="error-message"></p>
-
-                <div class="modal-actions vertical">
-                    <button id="auth-submit-btn" class="primary-btn">Login</button>
-                    <button id="auth-switch-btn" class="secondary-btn">Need an account? Sign Up</button>
-                    <button id="auth-cancel-btn" class="secondary-btn">Cancel</button>
-                </div>
-            </div>
-        </div>
-    </div>
 
     <!-- Category Modal -->
     <div id="category-modal" class="modal-overlay">

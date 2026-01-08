@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login | ZenTask</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Outfit:wght@300;400;500;600&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="index.css">
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background: var(--bg-primary);
+            overflow: hidden;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .login-container {
+            width: 100%;
+            max-width: 400px;
+            padding: 20px;
+            z-index: 10;
+        }
+
+        .login-card {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 24px;
+            padding: 40px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            animation: fadeIn 0.8s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .login-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .login-header h1 {
+            font-family: 'Outfit', sans-serif;
+            font-size: 32px;
+            font-weight: 600;
+            margin: 0;
+            background: linear-gradient(135deg, #fff 0%, rgba(255, 255, 255, 0.5) 100%);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .login-header p {
+            color: var(--text-secondary);
+            font-size: 14px;
+            margin-top: 8px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 12px;
+            font-weight: 500;
+            color: var(--text-secondary);
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .form-group input {
+            width: 100%;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 12px 16px;
+            color: white;
+            font-size: 15px;
+            transition: all 0.3s;
+            box-sizing: border-box;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: var(--accent-primary);
+            background: rgba(255, 255, 255, 0.1);
+            box-shadow: 0 0 0 4px rgba(139, 92, 246, 0.1);
+        }
+
+        .login-btn {
+            width: 100%;
+            background: var(--accent-primary);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            padding: 14px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-top: 10px;
+        }
+
+        .login-btn:hover {
+            background: #7c3aed;
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px -10px rgba(139, 92, 246, 0.5);
+        }
+
+        .switch-mode {
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        .switch-mode button {
+            background: transparent;
+            border: none;
+            color: var(--accent-primary);
+            font-size: 14px;
+            cursor: pointer;
+            text-decoration: underline;
+            opacity: 0.8;
+            transition: opacity 0.2s;
+        }
+
+        .switch-mode button:hover {
+            opacity: 1;
+        }
+
+        .domain-notice {
+            font-size: 11px;
+            color: var(--accent-primary);
+            text-align: center;
+            background: rgba(139, 92, 246, 0.1);
+            padding: 8px;
+            border-radius: 8px;
+            margin-bottom: 24px;
+            border: 1px dashed rgba(139, 92, 246, 0.3);
+        }
+
+        .error-message {
+            color: #ef4444;
+            font-size: 13px;
+            text-align: center;
+            margin-top: 15px;
+            min-height: 20px;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .error-message.visible {
+            opacity: 1;
+        }
+
+        #stars-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1;
+        }
+    </style>
+</head>
+
+<body>
+    <canvas id="stars-canvas"></canvas>
+
+    <div class="login-container">
+        <div class="login-card">
+            <div class="login-header">
+                <h1 id="auth-title">Welcome</h1>
+                <p id="auth-desc">Sign in to ZenTask</p>
+            </div>
+
+            <div class="domain-notice">
+                Registration restricted to @servicenow.com emails.
+            </div>
+
+            <div class="form-group">
+                <label>Email Address</label>
+                <input type="email" id="email" placeholder="name@servicenow.com" autocomplete="username">
+            </div>
+
+            <div class="form-group">
+                <label>Password</label>
+                <input type="password" id="password" placeholder="••••••••" autocomplete="current-password">
+            </div>
+
+            <button id="auth-submit-btn" class="login-btn">Login</button>
+
+            <div class="switch-mode">
+                <button id="auth-switch-btn">Need an account? Sign Up</button>
+            </div>
+
+            <div id="error-msg" class="error-message"></div>
+        </div>
+    </div>
+
+    <script src="stars.js"></script>
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+        import { getFirestore, doc, setDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+        // Reuse config from app.js would be better, but for simplicity we replicate it or use a shared config
+        const firebaseConfig = {
+            apiKey: "AIzaSyAUJwnbz_fwtNF1i2NSbLyjYOg9GdbTZAk",
+            authDomain: "zentask-bee2a.firebaseapp.com",
+            projectId: "zentask-bee2a",
+            storageBucket: "zentask-bee2a.firebasestorage.app",
+            messagingSenderId: "699307516136",
+            appId: "1:699307516136:web:43cb29051706e23395695d",
+            measurementId: "G-2QF43C996F"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        const emailInput = document.getElementById('email');
+        const passwordInput = document.getElementById('password');
+        const submitBtn = document.getElementById('auth-submit-btn');
+        const switchBtn = document.getElementById('auth-switch-btn');
+        const title = document.getElementById('auth-title');
+        const desc = document.getElementById('auth-desc');
+        const errorMsg = document.getElementById('error-msg');
+
+        let isSignUpMode = false;
+
+        const showError = (msg) => {
+            errorMsg.textContent = msg;
+            errorMsg.classList.add('visible');
+        };
+
+        const hideError = () => {
+            errorMsg.classList.remove('visible');
+        };
+
+        switchBtn.addEventListener('click', () => {
+            isSignUpMode = !isSignUpMode;
+            title.textContent = isSignUpMode ? 'Create Account' : 'Welcome Back';
+            desc.textContent = isSignUpMode ? 'Join the @servicenow.com team' : 'Sign in to ZenTask';
+            submitBtn.textContent = isSignUpMode ? 'Sign Up' : 'Login';
+            switchBtn.textContent = isSignUpMode ? 'Already have an account? Login' : 'Need an account? Sign Up';
+            hideError();
+        });
+
+        submitBtn.addEventListener('click', async () => {
+            const email = emailInput.value.trim();
+            const password = passwordInput.value;
+
+            hideError();
+
+            if (!email || !password) {
+                showError('Please enter both email and password.');
+                return;
+            }
+
+            if (!email.toLowerCase().endsWith('@servicenow.com')) {
+                showError('Only @servicenow.com emails are allowed.');
+                return;
+            }
+
+            try {
+                if (isSignUpMode) {
+                    const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+                    const user = userCredential.user;
+
+                    // Add user to database with default role
+                    await setDoc(doc(db, "users", user.uid), {
+                        email: user.email,
+                        role: 'member',
+                        createdAt: new Date().toISOString()
+                    });
+                } else {
+                    await signInWithEmailAndPassword(auth, email, password);
+                }
+                // Redirect on success is handled by onAuthStateChanged
+            } catch (error) {
+                console.error(error);
+                let friendlyMsg = error.message;
+                if (error.code === 'auth/configuration-not-found') {
+                    friendlyMsg = 'Firebase Auth is not configured. Please enable Email/Password provider in the console.';
+                } else if (error.code === 'auth/email-already-in-use') {
+                    friendlyMsg = 'This email is already registered.';
+                } else if (error.code === 'auth/wrong-password') {
+                    friendlyMsg = 'Incorrect password.';
+                }
+                showError(friendlyMsg);
+            }
+        });
+
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                window.location.href = 'index.html';
+            }
+        });
+    </script>
+</body>
+
+</html>

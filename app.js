@@ -153,7 +153,7 @@ const migrateDataIfNeeded = async (userId) => {
 
 // --- Firebase Listeners ---
 
-const setupListeners = (user) => {
+const setupListeners = (user, role) => {
     // Unsubscribe existing listeners if any
     if (unsubTasks) unsubTasks();
     if (unsubCats) unsubCats();
@@ -167,9 +167,18 @@ const setupListeners = (user) => {
     }
 
     const userId = user.uid;
+    const isAdmin = role === 'admin';
 
     // 1. Tasks Listener
-    const qTasks = query(collection(db, "tasks"), where("userId", "==", userId), orderBy("order", "desc"));
+    let qTasks;
+    if (isAdmin) {
+        // Admin sees all tasks
+        console.log("Admin mode: Fetching all tasks");
+        qTasks = query(collection(db, "tasks"), orderBy("order", "desc"));
+    } else {
+        qTasks = query(collection(db, "tasks"), where("userId", "==", userId), orderBy("order", "desc"));
+    }
+
     unsubTasks = onSnapshot(qTasks, (snapshot) => {
         tasks = [];
         snapshot.forEach((doc) => {
@@ -180,6 +189,7 @@ const setupListeners = (user) => {
     });
 
     // 2. Categories Listener
+    // Note: Categories are still scoped to user for now, but we could make them global for Admin too if needed.
     const qCats = query(collection(db, "categories"), where("userId", "==", userId), orderBy("createdAt", "asc"));
     unsubCats = onSnapshot(qCats, (snapshot) => {
         customCategories = [];
@@ -191,66 +201,7 @@ const setupListeners = (user) => {
     });
 };
 
-// --- Auth Functions ---
-
-let isSignUpMode = false;
-
-const showAuthModal = () => {
-    authModal.classList.add('active');
-    authEmailInput.focus();
-    authErrorMsg.textContent = '';
-};
-
-const closeAuthModal = () => {
-    authModal.classList.remove('active');
-    authEmailInput.value = '';
-    authPasswordInput.value = '';
-};
-
-const toggleAuthMode = () => {
-    isSignUpMode = !isSignUpMode;
-    authTitle.textContent = isSignUpMode ? 'Create Account' : 'Welcome Back';
-    authDesc.textContent = isSignUpMode ? 'Sign up to start sync your tasks.' : 'Login to sync your tasks across devices.';
-    authSubmitBtn.textContent = isSignUpMode ? 'Sign Up' : 'Login';
-    authSwitchBtn.textContent = isSignUpMode ? 'Already have an account? Login' : 'Need an account? Sign Up';
-};
-
-const handleAuth = async () => {
-    const email = authEmailInput.value.trim();
-    const password = authPasswordInput.value;
-
-    if (!email || !password) {
-        authErrorMsg.textContent = 'Please enter both email and password.';
-        return;
-    }
-
-    // Enforce Domain Restriction
-    if (!email.toLowerCase().endsWith('@servicenow.com')) {
-        authErrorMsg.textContent = 'Registration is restricted to @servicenow.com email addresses.';
-        return;
-    }
-
-    try {
-        if (isSignUpMode) {
-            const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-            const user = userCredential.user;
-
-            // Create user metadata in Firestore
-            await setDoc(doc(db, "users", user.uid), {
-                email: user.email,
-                role: 'member',
-                createdAt: new Date().toISOString()
-            });
-            console.log("User metadata created.");
-        } else {
-            await signInWithEmailAndPassword(auth, email, password);
-        }
-        closeAuthModal();
-    } catch (error) {
-        console.error(error);
-        authErrorMsg.textContent = error.message;
-    }
-};
+// --- App Logic ---
 
 const fetchUserRole = async (uid) => {
     try {
@@ -268,9 +219,9 @@ const fetchUserRole = async (uid) => {
 onAuthStateChanged(auth, async (user) => {
     currentUser = user;
     if (user) {
-        authBtn.classList.add('hidden');
-        userInfo.classList.remove('hidden');
-        userEmailDisplay.textContent = user.email;
+        // Logged in
+        if (userInfo) userInfo.classList.remove('hidden');
+        if (userEmailDisplay) userEmailDisplay.textContent = user.email;
 
         // Fetch and display role
         const role = await fetchUserRole(user.uid);
@@ -279,13 +230,10 @@ onAuthStateChanged(auth, async (user) => {
             userRoleDisplay.className = `user-role-badge ${role.toLowerCase()}`;
         }
 
-        setupListeners(user);
+        setupListeners(user, role);
     } else {
-        authBtn.classList.remove('hidden');
-        userInfo.classList.add('hidden');
-        userEmailDisplay.textContent = '';
-        if (userRoleDisplay) userRoleDisplay.textContent = '';
-        setupListeners(null);
+        // Not logged in -> Redirect to login page
+        window.location.href = 'login.html';
     }
 });
 
@@ -457,10 +405,7 @@ const addTask = async () => {
     const text = taskInput.value.trim();
     if (!text) return;
 
-    if (!currentUser) {
-        showAuthModal();
-        return;
-    }
+    if (!currentUser) return; // Silent return as onAuthStateChanged handles redirect
 
     try {
         // Optimistically clear input
@@ -697,20 +642,16 @@ const initStatusFilters = () => {
 window.ZenTask = {
     addTask,
     tasks: () => tasks,
-    db
+    db,
+    auth
 };
 
 // Auth Event Listeners
-authBtn.addEventListener('click', showAuthModal);
-logoutBtn.addEventListener('click', () => {
-    if (confirm('Logout?')) signOut(auth);
-});
-authSubmitBtn.addEventListener('click', handleAuth);
-authSwitchBtn.addEventListener('click', toggleAuthMode);
-authCancelBtn.addEventListener('click', closeAuthModal);
-authPasswordInput.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter') handleAuth();
-});
+if (logoutBtn) {
+    logoutBtn.addEventListener('click', () => {
+        if (confirm('Logout?')) signOut(auth);
+    });
+}
 
 updateDate();
 renderFilters();
