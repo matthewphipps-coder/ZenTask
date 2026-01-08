@@ -332,7 +332,6 @@ body {
     align-items: center;
     gap: 15px;
     padding: 16px 20px;
-    margin-bottom: 8px;
     background: rgba(255, 255, 255, 0.08);
     /* Higher opacity for "thick" look */
     backdrop-filter: blur(16px);
@@ -371,46 +370,45 @@ body {
     background: rgba(255, 255, 255, 0.05);
 }
 
-/* Drag Drop Indicators (Gap Highlighting) */
+/* Drag Drop Indicators (Stable Gap Highlighting) */
 .task-item {
     position: relative;
+    transition: transform 0.2s, background 0.2s, box-shadow 0.2s;
 }
 
-.task-item.drag-over-top,
-.task-item.drag-over-bottom {
-    border-color: rgba(255, 255, 255, 0.1);
-    transition: margin 0.15s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.task-item.drag-over-top {
-    margin-top: 24px;
-}
-
-.task-item.drag-over-bottom {
-    margin-bottom: 24px;
-}
-
+/* The indicator itself (Gap Line) */
 .task-item.drag-over-top::before,
 .task-item.drag-over-bottom::after {
     content: '';
     position: absolute;
-    left: 20px;
-    right: 20px;
-    height: 3px;
-    background: var(--accent-primary);
-    box-shadow: 0 0 15px var(--accent-primary);
-    border-radius: 4px;
+    left: 10px;
+    right: 10px;
+    height: 4px;
+    background: #a855f7;
+    /* High-visibility vibrant purple */
+    box-shadow: 0 0 20px 2px rgba(168, 85, 247, 0.8), 0 0 5px rgba(168, 85, 247, 1);
+    border-radius: 10px;
     pointer-events: none;
-    z-index: 100;
+    z-index: 1000;
 }
 
+/* Centered in the 8px gap */
 .task-item.drag-over-top::before {
-    top: -14px;
+    top: -6px;
 }
 
 .task-item.drag-over-bottom::after {
-    bottom: -14px;
+    bottom: -6px;
 }
+
+/* Visual feedback on the card itself without shifting layout */
+.task-item.drag-over-top,
+.task-item.drag-over-bottom {
+    background: rgba(139, 92, 246, 0.15) !important;
+    border-color: rgba(139, 92, 246, 0.5) !important;
+    box-shadow: 0 0 15px rgba(139, 92, 246, 0.2);
+}
+
 
 .task-checkbox {
     appearance: none;

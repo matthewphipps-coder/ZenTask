@@ -209,19 +209,30 @@ const createTaskElement = (task) => {
 
         const rect = li.getBoundingClientRect();
         const midY = rect.top + rect.height / 2;
+        const isTop = e.clientY < midY;
 
-        li.classList.remove('drag-over-top', 'drag-over-bottom');
-        if (e.clientY < midY) li.classList.add('drag-over-top');
-        else li.classList.add('drag-over-bottom');
+        if (isTop) {
+            if (!li.classList.contains('drag-over-top')) {
+                li.classList.remove('drag-over-bottom');
+                li.classList.add('drag-over-top');
+            }
+        } else {
+            if (!li.classList.contains('drag-over-bottom')) {
+                li.classList.remove('drag-over-top');
+                li.classList.add('drag-over-bottom');
+            }
+        }
     });
 
-    li.addEventListener('dragleave', () => li.classList.remove('drag-over-top', 'drag-over-bottom'));
+    li.addEventListener('dragleave', () => {
+        li.classList.remove('drag-over-top', 'drag-over-bottom');
+    });
 
     li.addEventListener('drop', (e) => {
         e.preventDefault();
-        const draggingId = e.dataTransfer.getData('text/plain'); // Firebase IDs are strings
         li.classList.remove('drag-over-top', 'drag-over-bottom');
 
+        const draggingId = e.dataTransfer.getData('text/plain');
         if (draggingId && draggingId !== task.id) {
             const rect = li.getBoundingClientRect();
             const midY = rect.top + rect.height / 2;
