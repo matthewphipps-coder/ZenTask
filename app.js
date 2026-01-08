@@ -1,6 +1,6 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-import { getFirestore, collection, addDoc, updateDoc, deleteDoc, doc, onSnapshot, query, where, orderBy, writeBatch, serverTimestamp, enableIndexedDbPersistence } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { getFirestore, collection, addDoc, updateDoc, deleteDoc, doc, onSnapshot, query, where, orderBy, writeBatch, serverTimestamp, enableIndexedDbPersistence, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 const firebaseConfig = {
     apiKey: "AIzaSyAUJwnbz_fwtNF1i2NSbLyjYOg9GdbTZAk",
@@ -71,6 +71,7 @@ const logoutBtn = document.getElementById('logout-btn');
 const userSection = document.getElementById('user-section');
 const userInfo = document.getElementById('user-info');
 const userEmailDisplay = document.getElementById('user-email');
+const userRoleDisplay = document.getElementById('user-role');
 
 // Mobile Menu Logic
 const mobileMenuBtn = document.getElementById('mobile-menu-btn');
@@ -223,9 +224,24 @@ const handleAuth = async () => {
         return;
     }
 
+    // Enforce Domain Restriction
+    if (!email.toLowerCase().endsWith('@servicenow.com')) {
+        authErrorMsg.textContent = 'Registration is restricted to @servicenow.com email addresses.';
+        return;
+    }
+
     try {
         if (isSignUpMode) {
-            await createUserWithEmailAndPassword(auth, email, password);
+            const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+            const user = userCredential.user;
+
+            // Create user metadata in Firestore
+            await setDoc(doc(db, "users", user.uid), {
+                email: user.email,
+                role: 'member',
+                createdAt: new Date().toISOString()
+            });
+            console.log("User metadata created.");
         } else {
             await signInWithEmailAndPassword(auth, email, password);
         }
@@ -236,17 +252,39 @@ const handleAuth = async () => {
     }
 };
 
-onAuthStateChanged(auth, (user) => {
+const fetchUserRole = async (uid) => {
+    try {
+        const userDoc = await getDoc(doc(db, "users", uid));
+        if (userDoc.exists()) {
+            return userDoc.data().role;
+        }
+        return 'member'; // Default
+    } catch (e) {
+        console.error("Error fetching role:", e);
+        return 'member';
+    }
+};
+
+onAuthStateChanged(auth, async (user) => {
     currentUser = user;
     if (user) {
         authBtn.classList.add('hidden');
         userInfo.classList.remove('hidden');
         userEmailDisplay.textContent = user.email;
+
+        // Fetch and display role
+        const role = await fetchUserRole(user.uid);
+        if (userRoleDisplay) {
+            userRoleDisplay.textContent = role;
+            userRoleDisplay.className = `user-role-badge ${role.toLowerCase()}`;
+        }
+
         setupListeners(user);
     } else {
         authBtn.classList.remove('hidden');
         userInfo.classList.add('hidden');
         userEmailDisplay.textContent = '';
+        if (userRoleDisplay) userRoleDisplay.textContent = '';
         setupListeners(null);
     }
 });

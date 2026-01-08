@@ -59,7 +59,10 @@
                 <div id="user-section" class="user-section">
                     <button id="auth-btn" class="auth-btn">Login</button>
                     <div id="user-info" class="user-info hidden">
-                        <span id="user-email" class="user-email"></span>
+                        <div class="user-meta">
+                            <span id="user-email" class="user-email"></span>
+                            <span id="user-role" class="user-role-badge">Member</span>
+                        </div>
                         <button id="logout-btn" class="logout-link">Logout</button>
                     </div>
                 </div>
@@ -104,6 +107,7 @@
         <div class="modal-content glass">
             <h2 id="auth-title">Welcome Back</h2>
             <p id="auth-desc">Login to sync your tasks across devices.</p>
+            <p id="auth-restrict" class="auth-notice">Only @servicenow.com accounts allowed.</p>
 
             <div class="auth-form">
                 <input type="email" id="auth-email" placeholder="Email" autocomplete="username">
