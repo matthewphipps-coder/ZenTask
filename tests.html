@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>ZenTask Test Suite</title>
+    <style>
+        body {
+            font-family: 'Courier New', monospace;
+            padding: 40px;
+            background: #111;
+            color: #eee;
+        }
+
+        h1 {
+            border-bottom: 1px solid #333;
+            padding-bottom: 10px;
+        }
+
+        .test-group {
+            margin-bottom: 20px;
+            padding: 10px;
+            border: 1px solid #333;
+            border-radius: 5px;
+        }
+
+        .pass {
+            color: #4caf50;
+            font-weight: bold;
+        }
+
+        .fail {
+            color: #f44336;
+            font-weight: bold;
+        }
+
+        .log {
+            margin-left: 20px;
+            color: #888;
+            font-size: 0.9em;
+        }
+
+        #test-ui {
+            position: absolute;
+            top: -9999px;
+            left: -9999px;
+            visibility: hidden;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>ZenTask Automated Tests</h1>
+    <div id="results">Running tests...</div>
+
+    <!-- Mock UI Container (Mirrors index.html structure required by app.js) -->
+    <div id="test-ui">
+        <canvas id="confetti-canvas"></canvas>
+        <div class="app-container">
+            <aside class="sidebar">
+                <nav class="sidebar-nav">
+                    <div id="status-filters">
+                        <button class="filter-btn active" data-filter-type="status" data-filter-value="all">All</button>
+                        <button class="filter-btn" data-filter-type="status" data-filter-value="today">Today</button>
+                        <button class="filter-btn" data-filter-type="status"
+                            data-filter-value="upcoming">Upcoming</button>
+                        <button class="filter-btn" data-filter-type="status" data-filter-value="completed">Done</button>
+                    </div>
+                    <div id="custom-filters"></div>
+                    <button id="add-category-btn">+</button>
+                </nav>
+                <div class="sidebar-footer">
+                    <button id="theme-btn">Theme</button>
+                </div>
+            </aside>
+
+            <section class="main-content">
+                <h2 id="current-date">Date</h2>
+                <div class="header-controls">
+                    <button id="mobile-menu-btn">Menu</button>
+                    <div class="minimal-stats">
+                        <span id="count-todo">0</span> / <span id="stats-all">0</span>
+                        <span id="stats-completed">0</span>
+                    </div>
+                    <input type="text" id="search-input">
+                </div>
+                <input type="text" id="task-input">
+                <ul id="task-list"></ul>
+            </section>
+        </div>
+
+        <div id="category-modal" class="modal-overlay">
+            <input type="text" id="modal-category-input">
+            <p id="modal-error-msg"></p>
+            <button id="modal-cancel-btn">Cancel</button>
+            <button id="modal-create-btn">Create</button>
+        </div>
+    </div>
+
+    <!-- Mock Environment & Test Runner -->
+    <script>
+        // 1. Mock Confetti preventing error
+        window.Confetti = class { shoot() { } };
+
+        // 2. Storage Sandbox
+        const realLocalStorage = { ...localStorage };
+        localStorage.clear();
+
+        function restoreStorage() {
+            localStorage.clear();
+            Object.keys(realLocalStorage).forEach(k => localStorage.setItem(k, realLocalStorage[k]));
+            console.log("Storage restored.");
+        }
+
+        // Test Helpers
+        const log = (msg, type = 'log') => {
+            const el = document.createElement('div');
+            el.className = type;
+            el.textContent = type === 'log' ? `  > ${msg}` : msg;
+            document.getElementById('results').appendChild(el);
+        };
+
+        const assert = (condition, desc) => {
+            if (condition) {
+                log(`[PASS] ${desc}`, 'pass');
+                return true;
+            } else {
+                log(`[FAIL] ${desc}`, 'fail');
+                return false;
+            }
+        };
+
+        // Helper to trigger keyboard events
+        const triggerEnter = (element) => {
+            const e = new KeyboardEvent('keydown', { key: 'Enter', bubbles: true, cancelable: true });
+            element.dispatchEvent(e);
+        };
+
+        const triggerClick = (element) => {
+            element.click();
+        };
+
+        // Helper to wait for a condition
+        const waitFor = async (predicate, timeout = 3000) => {
+            const start = Date.now();
+            while (Date.now() - start < timeout) {
+                if (predicate()) return true;
+                await new Promise(r => setTimeout(r, 100));
+            }
+            return false;
+        };
+
+        // Run tests after app initializes
+        window.addEventListener('load', async () => {
+            log('Initializing App for Testing...');
+
+            // Give app.js a moment to bind listeners
+            await new Promise(r => setTimeout(r, 500));
+
+            const taskInput = document.getElementById('task-input');
+            const taskList = document.getElementById('task-list');
+
+            try {
+                // Mock window.confirm globally for tests that might need it
+                const originalConfirm = window.confirm;
+                window.confirm = () => true; // Always confirm for tests
+
+                // --- TEST 1: Add Task ---
+                log('Test 1: Adding a Task');
+                taskInput.value = "Test Task Alpha";
+                triggerEnter(taskInput);
+
+                const taskAdded = await waitFor(() => {
+                    const task = taskList.firstElementChild;
+                    return task && task.querySelector('.task-text')?.textContent === "Test Task Alpha";
+                });
+
+                if (assert(taskAdded, "Task should be added to the list (Async)")) {
+                    // Proceed
+                } else {
+                    throw new Error("Task addition failed");
+                }
+
+                const task = taskList.firstElementChild; // Re-grab reference
+
+                // --- TEST 2: Task Stats ---
+                log('Test 2: Verifying Stats');
+                // Stats update is also driven by snapshot, so we wait
+                const statsUpdated = await waitFor(() => document.getElementById('count-todo').textContent === "1");
+                assert(statsUpdated, "Active task count should be 1");
+
+                // --- TEST 3: Complete Task ---
+                log('Test 3: Completing a Task');
+                const checkbox = task.querySelector('.task-checkbox');
+                triggerClick(checkbox);
+
+                const taskCompleted = await waitFor(() => {
+                    const t = taskList.firstElementChild;
+                    return t && t.classList.contains('completed');
+                });
+                assert(taskCompleted, "Task should have 'completed' class");
+
+                // --- TEST 4: Delete Task ---
+                log('Test 4: Deleting a Task');
+                // Need to re-query button because previous render might have replaced the element
+                const currentTask = taskList.firstElementChild;
+                const deleteBtn = currentTask.querySelector('.delete-task');
+                triggerClick(deleteBtn);
+
+                const taskDeleted = await waitFor(() => {
+                    return taskList.children.length === 0 || !!taskList.querySelector('.empty-state');
+                });
+                assert(taskDeleted, "Task list should be empty");
+
+                // --- TEST 5: Category Creation ---
+                log('Test 5: Create Category');
+                const addCatBtn = document.getElementById('add-category-btn');
+                triggerClick(addCatBtn);
+
+                const modal = document.getElementById('category-modal');
+                assert(modal.classList.contains('active'), "Modal should open");
+
+                const catInput = document.getElementById('modal-category-input');
+                const createBtn = document.getElementById('modal-create-btn');
+                catInput.value = "work";
+                triggerClick(createBtn);
+
+                const catAdded = await waitFor(() => {
+                    const btns = document.querySelectorAll('#custom-filters .filter-btn');
+                    return Array.from(btns).some(b => b.dataset.filterValue === "work" || b.textContent.includes("work"));
+                });
+                assert(catAdded, "New category 'work' should appear in sidebar");
+
+                // --- TEST 6: Mobile Menu ---
+                log('Test 6: Mobile Menu Toggle');
+                const menuBtn = document.getElementById('mobile-menu-btn');
+                const sidebar = document.querySelector('.sidebar');
+                triggerClick(menuBtn);
+                assert(sidebar.classList.contains('active'), "Sidebar should have 'active' class");
+
+            } catch (e) {
+                log(`CRITICAL ERROR: ${e.message}`, 'fail');
+                console.error(e);
+            } finally {
+                // Restore original confirm
+                window.confirm = originalConfirm;
+                // Restore User Data
+                restoreStorage();
+                log('Tests Completed. LocalStorage restored.');
+            }
+        });
+    </script>
+
+    <!-- Load the Application Logic -->
+    <script type="module" src="app.js"></script>
+</body>
+
+</html>

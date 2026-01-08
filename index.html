@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ZenTask | Elegant Task Management</title>
+    <meta name="description"
+        content="A sophisticated and elegant task manager to help you stay focused and productive.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Outfit:wght@300;400;500;600&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="index.css">
+</head>
+
+<body>
+    <canvas id="confetti-canvas"></canvas>
+    <canvas id="stars-canvas"></canvas>
+    <div class="app-background"></div>
+
+    <main class="app-container">
+        <aside class="sidebar glass">
+            <header class="logo">
+                <span class="logo-icon">✧</span>
+            </header>
+
+            <nav class="sidebar-nav">
+                <div class="nav-section">
+                    <div id="status-filters" class="filter-list">
+                        <button class="filter-btn active" data-filter-type="status" data-filter-value="all">
+                            <span class="icon">∞</span> All
+                        </button>
+                        <button class="filter-btn" data-filter-type="status" data-filter-value="today">
+                            <span class="icon">☀</span> Today
+                        </button>
+                        <button class="filter-btn" data-filter-type="status" data-filter-value="upcoming">
+                            <span class="icon">🗓</span> Upcoming
+                        </button>
+                        <button class="filter-btn" data-filter-type="status" data-filter-value="completed">
+                            <span class="icon">✓</span> Done
+                        </button>
+                    </div>
+                </div>
+
+                <div class="nav-section">
+                    <div class="section-header">
+                        <button id="add-category-btn" title="Add New Group">+</button>
+                        <h3>Groups</h3>
+                    </div>
+                    <div id="custom-filters" class="filter-list">
+                        <!-- Custom groups will be injected here -->
+                    </div>
+                </div>
+            </nav>
+
+            <div class="sidebar-footer">
+                <div class="theme-toggle">
+                    <button id="theme-btn" title="Toggle Theme">☾</button>
+                </div>
+            </div>
+        </aside>
+
+        <section class="main-content">
+            <header class="content-header">
+                <div class="welcome">
+                    <h2 id="current-date">Today</h2>
+                </div>
+                <div class="header-controls">
+                    <button id="mobile-menu-btn" class="icon-btn" title="Open Menu">
+                        <span class="icon">☰</span>
+                    </button>
+                    <div class="minimal-stats">
+                        <span id="count-todo">0</span> / <span id="stats-all">0</span>
+                    </div>
+                    <div class="search-minimal">
+                        <input type="text" id="search-input" placeholder="Search..." autocomplete="off">
+                    </div>
+                </div>
+            </header>
+
+            <div class="input-row minimal-input">
+                <input type="text" id="task-input" placeholder="Add a new task..." autocomplete="off">
+            </div>
+
+            <div class="task-list-wrapper">
+                <ul id="task-list" class="task-list">
+                    <!-- Tasks will be injected here -->
+                </ul>
+            </div>
+        </section>
+    </main>
+
+    <!-- Category Modal -->
+    <div id="category-modal" class="modal-overlay">
+        <div class="modal-content glass">
+            <h2>New Group</h2>
+            <p>Enter a name for your new group.</p>
+            <input type="text" id="modal-category-input" placeholder="e.g., Work, Personal, Travel..."
+                autocomplete="off">
+            <p id="modal-error-msg" class="error-message"></p>
+            <div class="modal-actions">
+                <button id="modal-cancel-btn" class="secondary-btn">Cancel</button>
+                <button id="modal-create-btn" class="primary-btn">Create Group</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="confetti.js" defer></script>
+    <script src="stars.js" defer></script>
+    <script type="module" src="app.js"></script>
+</body>
+
+</html>
