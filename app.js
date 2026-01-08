@@ -1,5 +1,6 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-import { getFirestore, collection, addDoc, updateDoc, deleteDoc, doc, onSnapshot, query, orderBy, writeBatch, serverTimestamp, enableIndexedDbPersistence } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+import { getFirestore, collection, addDoc, updateDoc, deleteDoc, doc, onSnapshot, query, where, orderBy, writeBatch, serverTimestamp, enableIndexedDbPersistence } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 const firebaseConfig = {
     apiKey: "AIzaSyAUJwnbz_fwtNF1i2NSbLyjYOg9GdbTZAk",
@@ -13,6 +14,8 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
+const auth = getAuth(app);
+
 enableIndexedDbPersistence(db).catch(err => {
     if (err.code == 'failed-precondition') {
         console.warn('Persistence failed: Multiple tabs open');
@@ -27,6 +30,9 @@ let customCategories = []; // Synced with Firebase
 let currentFilter = { type: 'status', value: 'all' }; // Default filter
 let searchQuery = '';
 let isDarkMode = localStorage.getItem('zenTheme') !== 'light';
+let currentUser = null;
+let unsubTasks = null;
+let unsubCats = null;
 
 // Initialize Confetti
 const confetti = new window.Confetti('confetti-canvas');
@@ -49,6 +55,22 @@ const categoryModal = document.getElementById('category-modal');
 const modalCategoryInput = document.getElementById('modal-category-input');
 const modalCreateBtn = document.getElementById('modal-create-btn');
 const modalCancelBtn = document.getElementById('modal-cancel-btn');
+
+const authModal = document.getElementById('auth-modal');
+const authEmailInput = document.getElementById('auth-email');
+const authPasswordInput = document.getElementById('auth-password');
+const authSubmitBtn = document.getElementById('auth-submit-btn');
+const authSwitchBtn = document.getElementById('auth-switch-btn');
+const authCancelBtn = document.getElementById('auth-cancel-btn');
+const authTitle = document.getElementById('auth-title');
+const authDesc = document.getElementById('auth-desc');
+const authErrorMsg = document.getElementById('auth-error-msg');
+
+const authBtn = document.getElementById('auth-btn');
+const logoutBtn = document.getElementById('logout-btn');
+const userSection = document.getElementById('user-section');
+const userInfo = document.getElementById('user-info');
+const userEmailDisplay = document.getElementById('user-email');
 
 // Mobile Menu Logic
 const mobileMenuBtn = document.getElementById('mobile-menu-btn');
@@ -96,31 +118,23 @@ const updateStats = () => {
 };
 
 // --- Data Migration (Events) ---
-const migrateDataIfNeeded = async () => {
+const migrateDataIfNeeded = async (userId) => {
     const localTasks = JSON.parse(localStorage.getItem('zenTasks'));
     const localCats = JSON.parse(localStorage.getItem('zenCategories'));
 
-    // If we have local data but DB is empty, let's migrate
-    // Note: This is a simple check. Robust apps might need more complex logic.
     if (tasks.length === 0 && localTasks && localTasks.length > 0) {
         console.log("Migrating tasks to Firebase...");
         const batch = writeBatch(db);
-
         localTasks.forEach(t => {
             const ref = doc(collection(db, "tasks"));
             batch.set(ref, {
-                text: t.text,
-                completed: t.completed || false,
-                priority: t.priority || 'medium',
-                status: t.status || 'today',
-                category: t.category || null,
+                ...t,
+                userId,
                 createdAt: t.createdAt || new Date().toISOString(),
-                order: t.order || Date.now() // Ensure order exists
+                order: t.order || Date.now()
             });
         });
-
         await batch.commit();
-        console.log("Migration complete. Clearing local storage.");
         localStorage.removeItem('zenTasks');
     }
 
@@ -129,7 +143,7 @@ const migrateDataIfNeeded = async () => {
         const batch = writeBatch(db);
         localCats.forEach(c => {
             const ref = doc(collection(db, "categories"));
-            batch.set(ref, { name: c, createdAt: new Date().toISOString() });
+            batch.set(ref, { name: c, userId, createdAt: new Date().toISOString() });
         });
         await batch.commit();
         localStorage.removeItem('zenCategories');
@@ -138,26 +152,103 @@ const migrateDataIfNeeded = async () => {
 
 // --- Firebase Listeners ---
 
-// 1. Tasks Listener
-const q = query(collection(db, "tasks"), orderBy("order", "desc"));
-onSnapshot(q, (snapshot) => {
-    tasks = [];
-    snapshot.forEach((doc) => {
-        tasks.push({ id: doc.id, ...doc.data() });
-    });
-    // Attempt migration once we know state of DB
-    migrateDataIfNeeded();
-    renderTasks();
-});
+const setupListeners = (user) => {
+    // Unsubscribe existing listeners if any
+    if (unsubTasks) unsubTasks();
+    if (unsubCats) unsubCats();
 
-// 2. Categories Listener
-const catQuery = query(collection(db, "categories"), orderBy("createdAt"));
-onSnapshot(catQuery, (snapshot) => {
-    customCategories = [];
-    snapshot.forEach((doc) => {
-        customCategories.push({ id: doc.id, ...doc.data() });
+    if (!user) {
+        tasks = [];
+        customCategories = [];
+        renderTasks();
+        renderFilters();
+        return;
+    }
+
+    const userId = user.uid;
+
+    // 1. Tasks Listener
+    const qTasks = query(collection(db, "tasks"), where("userId", "==", userId), orderBy("order", "desc"));
+    unsubTasks = onSnapshot(qTasks, (snapshot) => {
+        tasks = [];
+        snapshot.forEach((doc) => {
+            tasks.push({ id: doc.id, ...doc.data() });
+        });
+        migrateDataIfNeeded(userId);
+        renderTasks();
     });
-    renderFilters();
+
+    // 2. Categories Listener
+    const qCats = query(collection(db, "categories"), where("userId", "==", userId), orderBy("createdAt", "asc"));
+    unsubCats = onSnapshot(qCats, (snapshot) => {
+        customCategories = [];
+        snapshot.forEach((doc) => {
+            customCategories.push({ id: doc.id, ...doc.data() });
+        });
+        migrateDataIfNeeded(userId);
+        renderFilters();
+    });
+};
+
+// --- Auth Functions ---
+
+let isSignUpMode = false;
+
+const showAuthModal = () => {
+    authModal.classList.add('active');
+    authEmailInput.focus();
+    authErrorMsg.textContent = '';
+};
+
+const closeAuthModal = () => {
+    authModal.classList.remove('active');
+    authEmailInput.value = '';
+    authPasswordInput.value = '';
+};
+
+const toggleAuthMode = () => {
+    isSignUpMode = !isSignUpMode;
+    authTitle.textContent = isSignUpMode ? 'Create Account' : 'Welcome Back';
+    authDesc.textContent = isSignUpMode ? 'Sign up to start sync your tasks.' : 'Login to sync your tasks across devices.';
+    authSubmitBtn.textContent = isSignUpMode ? 'Sign Up' : 'Login';
+    authSwitchBtn.textContent = isSignUpMode ? 'Already have an account? Login' : 'Need an account? Sign Up';
+};
+
+const handleAuth = async () => {
+    const email = authEmailInput.value.trim();
+    const password = authPasswordInput.value;
+
+    if (!email || !password) {
+        authErrorMsg.textContent = 'Please enter both email and password.';
+        return;
+    }
+
+    try {
+        if (isSignUpMode) {
+            await createUserWithEmailAndPassword(auth, email, password);
+        } else {
+            await signInWithEmailAndPassword(auth, email, password);
+        }
+        closeAuthModal();
+    } catch (error) {
+        console.error(error);
+        authErrorMsg.textContent = error.message;
+    }
+};
+
+onAuthStateChanged(auth, (user) => {
+    currentUser = user;
+    if (user) {
+        authBtn.classList.add('hidden');
+        userInfo.classList.remove('hidden');
+        userEmailDisplay.textContent = user.email;
+        setupListeners(user);
+    } else {
+        authBtn.classList.remove('hidden');
+        userInfo.classList.add('hidden');
+        userEmailDisplay.textContent = '';
+        setupListeners(null);
+    }
 });
 
 
@@ -325,10 +416,15 @@ const setFilter = (type, value) => {
 // --- Actions (Firebase Writes) ---
 
 const addTask = async () => {
-    try {
-        const text = taskInput.value.trim();
-        if (!text) return;
+    const text = taskInput.value.trim();
+    if (!text) return;
 
+    if (!currentUser) {
+        showAuthModal();
+        return;
+    }
+
+    try {
         // Optimistically clear input
         taskInput.value = '';
 
@@ -342,8 +438,9 @@ const addTask = async () => {
             priority: 'medium',
             status,
             category,
+            userId: currentUser.uid,
             createdAt: new Date().toISOString(),
-            order: Date.now() // Simple timestamp ordering (Higher = newer, so we sort DESC)
+            order: tasks.length > 0 ? Math.max(...tasks.map(t => t.order || 0)) + 1 : Date.now()
         });
     } catch (err) {
         console.error("Error adding task:", err);
@@ -401,7 +498,11 @@ const addCategory = async () => {
 
     try {
         console.log("Saving category to DB...");
-        addDoc(collection(db, "categories"), { name, createdAt: new Date().toISOString() });
+        addDoc(collection(db, "categories"), {
+            name,
+            userId: currentUser.uid,
+            createdAt: new Date().toISOString()
+        });
         closeCategoryModal();
     } catch (e) {
         console.error(e);
@@ -560,6 +661,18 @@ window.ZenTask = {
     tasks: () => tasks,
     db
 };
+
+// Auth Event Listeners
+authBtn.addEventListener('click', showAuthModal);
+logoutBtn.addEventListener('click', () => {
+    if (confirm('Logout?')) signOut(auth);
+});
+authSubmitBtn.addEventListener('click', handleAuth);
+authSwitchBtn.addEventListener('click', toggleAuthMode);
+authCancelBtn.addEventListener('click', closeAuthModal);
+authPasswordInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') handleAuth();
+});
 
 updateDate();
 renderFilters();

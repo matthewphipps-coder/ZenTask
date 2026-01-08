@@ -784,3 +784,77 @@ body {
         font-size: 14px;
     }
 }
+/* Auth UI */
+.user-section {
+    margin-bottom: 20px;
+}
+
+.auth-btn {
+    background: var(--accent-primary);
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+    width: 100%;
+}
+
+.auth-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3);
+}
+
+.user-info {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.user-info.hidden {
+    display: none;
+}
+
+.user-email {
+    font-size: 12px;
+    color: var(--text-secondary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: block;
+}
+
+.logout-link {
+    background: transparent;
+    border: none;
+    color: var(--accent-primary);
+    font-size: 12px;
+    cursor: pointer;
+    text-align: left;
+    padding: 0;
+    text-decoration: underline;
+    opacity: 0.8;
+}
+
+.logout-link:hover {
+    opacity: 1;
+}
+
+.modal-actions.vertical {
+    flex-direction: column;
+}
+
+.modal-actions.vertical button {
+    width: 100%;
+}
+
+.auth-form input {
+    margin-bottom: 12px !important;
+}
+
+#auth-error-msg {
+    margin-top: -5px;
+    margin-bottom: 15px;
+}

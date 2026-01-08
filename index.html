@@ -56,6 +56,13 @@
             </nav>
 
             <div class="sidebar-footer">
+                <div id="user-section" class="user-section">
+                    <button id="auth-btn" class="auth-btn">Login</button>
+                    <div id="user-info" class="user-info hidden">
+                        <span id="user-email" class="user-email"></span>
+                        <button id="logout-btn" class="logout-link">Logout</button>
+                    </div>
+                </div>
                 <div class="theme-toggle">
                     <button id="theme-btn" title="Toggle Theme">☾</button>
                 </div>
@@ -91,6 +98,26 @@
             </div>
         </section>
     </main>
+
+    <!-- Auth Modal -->
+    <div id="auth-modal" class="modal-overlay">
+        <div class="modal-content glass">
+            <h2 id="auth-title">Welcome Back</h2>
+            <p id="auth-desc">Login to sync your tasks across devices.</p>
+
+            <div class="auth-form">
+                <input type="email" id="auth-email" placeholder="Email" autocomplete="username">
+                <input type="password" id="auth-password" placeholder="Password" autocomplete="current-password">
+                <p id="auth-error-msg" class="error-message"></p>
+
+                <div class="modal-actions vertical">
+                    <button id="auth-submit-btn" class="primary-btn">Login</button>
+                    <button id="auth-switch-btn" class="secondary-btn">Need an account? Sign Up</button>
+                    <button id="auth-cancel-btn" class="secondary-btn">Cancel</button>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <!-- Category Modal -->
     <div id="category-modal" class="modal-overlay">
