@@ -361,23 +361,55 @@ const cyclePriority = async (id, currentPriority) => {
     await updateDoc(doc(db, "tasks", id), { priority: next });
 };
 
+// Modal Helpers
+const closeCategoryModal = () => {
+    console.log("Closing category modal...");
+    if (categoryModal) categoryModal.classList.remove('active');
+    if (modalCategoryInput) modalCategoryInput.value = '';
+};
+
 const addCategory = async () => {
+    console.log("addCategory called");
     const name = modalCategoryInput.value.trim().toLowerCase();
-    if (!name) return;
+    const errorMsg = document.getElementById('modal-error-msg');
+
+    // Reset error state
+    if (errorMsg) errorMsg.classList.remove('visible');
+    modalCategoryInput.classList.remove('input-error');
+
+    if (!name) {
+        showError("Group name cannot be empty.");
+        return;
+    }
 
     // Check local duplicate (from firebase sync state)
     if (customCategories.some(c => c.name === name)) {
-        alert('Group exists');
+        showError("Group already exists.");
         return;
     }
 
     try {
-        await addDoc(collection(db, "categories"), { name, createdAt: new Date().toISOString() });
+        console.log("Saving category to DB...");
+        addDoc(collection(db, "categories"), { name, createdAt: new Date().toISOString() });
         closeCategoryModal();
     } catch (e) {
         console.error(e);
-        alert("Error creating group");
+        showError("Error creating group.");
     }
+};
+
+const showError = (message) => {
+    const errorMsg = document.getElementById('modal-error-msg');
+    if (errorMsg) {
+        errorMsg.textContent = message;
+        errorMsg.classList.add('visible');
+    } else {
+        alert(message);
+    }
+    modalCategoryInput.classList.add('input-error');
+    setTimeout(() => {
+        modalCategoryInput.classList.remove('input-error');
+    }, 500);
 };
 
 const deleteCategory = async (id) => {
@@ -457,11 +489,7 @@ themeBtn.addEventListener('click', () => {
     localStorage.setItem('zenTheme', isLight ? 'light' : 'dark');
 });
 
-// Modal
-function closeCategoryModal() {
-    categoryModal.classList.remove('active');
-    modalCategoryInput.value = '';
-}
+// Event Listeners for Modal Logic are handled below
 
 addCategoryBtn.addEventListener('click', () => { categoryModal.classList.add('active'); modalCategoryInput.focus(); });
 modalCancelBtn.addEventListener('click', closeCategoryModal);
