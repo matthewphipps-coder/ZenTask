@@ -371,19 +371,45 @@ body {
     background: rgba(255, 255, 255, 0.05);
 }
 
-/* Drag Drop Indicators */
+/* Drag Drop Indicators (Gap Highlighting) */
+.task-item {
+    position: relative;
+}
+
+.task-item.drag-over-top,
+.task-item.drag-over-bottom {
+    border-color: rgba(255, 255, 255, 0.1);
+    transition: margin 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
 .task-item.drag-over-top {
-    border-top: 2px solid var(--accent-primary);
-    margin-top: 4px;
-    /* visual spacing */
-    transition: none;
-    /* Instant feedback */
+    margin-top: 24px;
 }
 
 .task-item.drag-over-bottom {
-    border-bottom: 2px solid var(--accent-primary);
-    margin-bottom: 4px;
-    transition: none;
+    margin-bottom: 24px;
+}
+
+.task-item.drag-over-top::before,
+.task-item.drag-over-bottom::after {
+    content: '';
+    position: absolute;
+    left: 20px;
+    right: 20px;
+    height: 3px;
+    background: var(--accent-primary);
+    box-shadow: 0 0 15px var(--accent-primary);
+    border-radius: 4px;
+    pointer-events: none;
+    z-index: 100;
+}
+
+.task-item.drag-over-top::before {
+    top: -14px;
+}
+
+.task-item.drag-over-bottom::after {
+    bottom: -14px;
 }
 
 .task-checkbox {
