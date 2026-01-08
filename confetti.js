@@ -26,10 +26,11 @@ class Confetti {
     }
 
     shoot() {
+        const isAlreadyRunning = this.particles.length > 0;
         for (let i = 0; i < 100; i++) {
             this.particles.push(this.createParticle());
         }
-        if (this.particles.length === 100) {
+        if (!isAlreadyRunning) {
             this.animate();
         }
     }
@@ -37,7 +38,7 @@ class Confetti {
     animate() {
         this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
 
-        const fadeHeight = this.canvas.height / 4;
+        const fadeThreshold = this.canvas.height * 0.8;
 
         for (let i = this.particles.length - 1; i >= 0; i--) {
             const p = this.particles[i];
@@ -45,8 +46,8 @@ class Confetti {
             p.x += Math.sin(p.angle) * 1;
             p.angle += p.rotation;
 
-            // Calculate opacity based on distance: fades to 0 at 25% screen height
-            const opacity = Math.max(0, 1 - (p.y / fadeHeight));
+            // Fade out as it gets to the bottom
+            const opacity = Math.max(0, 1 - (p.y / this.canvas.height));
 
             this.ctx.save();
             this.ctx.globalAlpha = opacity;
@@ -56,8 +57,8 @@ class Confetti {
             this.ctx.fillRect(-p.size / 2, -p.size / 2, p.size, p.size);
             this.ctx.restore();
 
-            // Remove if invisible or past the fade threshold
-            if (opacity <= 0 || p.y > fadeHeight) {
+            // Remove if past screen or faded
+            if (p.y > this.canvas.height || opacity <= 0) {
                 this.particles.splice(i, 1);
             }
         }
