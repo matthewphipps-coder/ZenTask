@@ -5,3 +5,6 @@ node_modules/
 firebase-debug.log*
 firestore-debug.log*
 ui-debug.log*
+
+# API Keys - Keep these secret!
+config.js

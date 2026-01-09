@@ -75,8 +75,9 @@ const geminiChatHistory = document.getElementById('gemini-chat-history');
 const geminiInput = document.getElementById('gemini-input');
 const geminiSendBtn = document.getElementById('gemini-send-btn');
 
-const GEMINI_API_KEY = "AIzaSyAjhxHz04LPBigV_8iexFfgqo79NRvatL8";
-const CLAUDE_API_KEY = "YOUR_CLAUDE_API_KEY"; // Add your Claude API key here
+// API Keys are now loaded from config.js (which is gitignored)
+const GEMINI_API_KEY = window.API_CONFIG?.GEMINI_API_KEY || "YOUR_GEMINI_API_KEY";
+const CLAUDE_API_KEY = window.API_CONFIG?.CLAUDE_API_KEY || "YOUR_CLAUDE_API_KEY";
 let selectedAIProvider = localStorage.getItem('zenAIProvider') || 'gemini'; // 'gemini' or 'claude'
 
 // Mobile Menu Logic
@@ -710,7 +711,7 @@ const askGemini = async (prompt) => {
     }
 
     try {
-        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key=${GEMINI_API_KEY}`, {
+        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=${GEMINI_API_KEY}`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
