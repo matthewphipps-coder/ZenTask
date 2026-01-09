@@ -1187,10 +1187,17 @@ body {
     border-bottom: 2px solid transparent;
     transition: all 0.2s;
     line-height: 1.2;
+    cursor: text;
 }
 
-.task-name-input:focus {
+.task-name-input:read-only {
+    cursor: pointer;
+    user-select: none;
+}
+
+.task-name-input:not(:read-only):focus {
     border-bottom-color: var(--accent-primary);
+    cursor: text;
 }
 
 .close-btn {

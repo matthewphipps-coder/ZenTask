@@ -950,7 +950,9 @@ const openTaskDetail = (task) => {
     activeTaskForDetail = task;
 
     // Set task name and checkbox
+    // Set task name and checkbox
     detailTaskName.value = task.text;
+    detailTaskName.readOnly = true;
     detailTaskCheckbox.checked = task.completed;
 
     // Set priority dropdown
@@ -1031,9 +1033,17 @@ detailTaskCheckbox.addEventListener('change', () => {
     if (activeTaskForDetail) toggleTask(activeTaskForDetail);
 });
 
-detailTaskName.addEventListener('change', async () => {
-    if (activeTaskForDetail && detailTaskName.value.trim()) {
+// Task Name Edit Logic (Click to Edit)
+detailTaskName.addEventListener('click', () => {
+    detailTaskName.readOnly = false;
+});
+
+detailTaskName.addEventListener('blur', async () => {
+    detailTaskName.readOnly = true;
+    // Save on blur
+    if (activeTaskForDetail && detailTaskName.value.trim() && detailTaskName.value.trim() !== activeTaskForDetail.text) {
         await updateDoc(doc(db, "tasks", activeTaskForDetail.id), { text: detailTaskName.value.trim() });
+        activeTaskForDetail.text = detailTaskName.value.trim();
     }
 });
 
