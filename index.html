@@ -14,7 +14,7 @@
         rel="stylesheet">
     <link rel="stylesheet"
         href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" />
-    <link rel="stylesheet" href="index.css?v=3.0">
+    <link rel="stylesheet" href="index.css?v=3.1">
     <script>
         // Early redirect if not "logged in" (using a simple session check or just let app.js handle it)
         // But for better UX, we can check a flag or just let app.js do the heavy lifting.
@@ -44,8 +44,8 @@
             <nav class="sidebar-nav">
                 <div class="nav-section">
                     <div id="status-filters" class="filter-list">
-                        <button class="filter-btn active" data-filter-type="status" data-filter-value="all">
-                            <span class="icon">∞</span> All
+                        <button class="filter-btn active" data-filter-type="status" data-filter-value="inbox">
+                            <span class="icon">📥</span> Inbox
                         </button>
                         <button class="filter-btn" data-filter-type="status" data-filter-value="today">
                             <span class="icon">☀</span> Today
@@ -55,6 +55,9 @@
                         </button>
                         <button class="filter-btn" data-filter-type="status" data-filter-value="completed">
                             <span class="icon">✓</span> Done
+                        </button>
+                        <button class="filter-btn" data-filter-type="status" data-filter-value="all">
+                            <span class="icon">∞</span> All
                         </button>
                         <button class="filter-btn bin-btn" data-filter-type="status" data-filter-value="bin">
                             <span class="icon">🗑</span> Bin
@@ -167,6 +170,7 @@
                     <div class="meta-item">
                         <label>Status</label>
                         <select id="detail-task-status" class="meta-select">
+                            <option value="inbox">Inbox</option>
                             <option value="today">Today</option>
                             <option value="upcoming">Upcoming</option>
                         </select>
@@ -270,7 +274,7 @@
     <script src="confetti.js" defer></script>
     <script src="stars.js" defer></script>
     <script src="config.js"></script>
-    <script type="module" src="app.js?v=3.0"></script>
+    <script type="module" src="app.js?v=3.1"></script>
 </body>
 
 </html>

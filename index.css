@@ -500,7 +500,8 @@ body {
 .task-content {
     flex: 1;
     display: flex;
-    align-items: baseline;
+    align-items: center;
+    /* Vertically center everything including priority */
     gap: 10px;
 }
 
@@ -539,8 +540,9 @@ body {
 }
 
 .priority-dot.priority-low {
-    background-color: var(--priority-low);
-    box-shadow: 0 0 6px var(--priority-low);
+    background-color: #94a3b8;
+    /* Grey */
+    box-shadow: 0 0 4px #94a3b8;
 }
 
 .priority-dot.priority-medium {
@@ -554,8 +556,12 @@ body {
 }
 
 /* Indicators */
-.status-indicator,
 .category-indicator {
+    display: none !important;
+    /* Hide category label */
+}
+
+.status-indicator {
     font-size: 10px;
     text-transform: uppercase;
     letter-spacing: 0.5px;
@@ -760,6 +766,15 @@ body {
 .primary-btn {
     background: var(--accent-primary);
     color: white;
+    outline: none;
+}
+
+.primary-btn:active,
+.primary-btn:focus {
+    background: var(--accent-primary);
+    transform: scale(0.98);
+    box-shadow: 0 0 0 2px rgba(98, 216, 78, 0.4);
+    /* Green glow */
 }
 
 .secondary-btn {

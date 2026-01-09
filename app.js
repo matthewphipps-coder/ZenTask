@@ -27,7 +27,7 @@ enableIndexedDbPersistence(db).catch(err => {
 // State management
 let tasks = []; // Synced with Firebase
 let customCategories = []; // Synced with Firebase
-let currentFilter = { type: 'status', value: 'all' }; // Default filter
+let currentFilter = { type: 'status', value: 'inbox' }; // Default filter
 let searchQuery = '';
 let isDarkMode = localStorage.getItem('zenTheme') !== 'light';
 let currentUser = null;
@@ -388,7 +388,8 @@ const renderTasks = () => {
         if (currentFilter.type === 'status') {
             if (currentFilter.value === 'all') matchesFilter = !task.completed;
             else if (currentFilter.value === 'completed') matchesFilter = task.completed;
-            else if (currentFilter.value === 'today') matchesFilter = !task.completed && (task.status === 'today' || !task.status);
+            else if (currentFilter.value === 'today') matchesFilter = !task.completed && task.status === 'today';
+            else if (currentFilter.value === 'inbox') matchesFilter = !task.completed && (task.status === 'inbox' || !task.status);
             else if (currentFilter.value === 'upcoming') matchesFilter = !task.completed && task.status === 'upcoming';
         } else if (currentFilter.type === 'category') {
             matchesFilter = task.category === currentFilter.value;
@@ -491,8 +492,11 @@ const addTask = async () => {
         taskInput.value = '';
 
         let category = currentFilter.type === 'category' ? currentFilter.value : null;
-        let status = 'today';
-        if (currentFilter.type === 'status' && currentFilter.value === 'upcoming') status = 'upcoming';
+        let status = 'inbox';
+        if (currentFilter.type === 'status') {
+            if (currentFilter.value === 'today') status = 'today';
+            else if (currentFilter.value === 'upcoming') status = 'upcoming';
+        }
 
         await addDoc(collection(db, "tasks"), {
             text,
