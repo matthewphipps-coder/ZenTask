@@ -475,8 +475,21 @@ body {
 }
 
 .task-checkbox:checked {
-    border-color: var(--accent-secondary);
-    background: var(--accent-secondary);
+    border-color: var(--accent-primary);
+    background: var(--accent-primary);
+    opacity: 1;
+}
+
+.task-checkbox:checked::after {
+    content: '✓';
+    position: absolute;
+    color: #0f172a;
+    /* Dark text */
+    font-size: 12px;
+    font-weight: 700;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
 }
 
 .task-checkbox:hover {
