@@ -1197,6 +1197,8 @@ body {
 
 .task-name-input:not(:read-only):focus {
     border-bottom-color: var(--accent-primary);
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 4px 4px 0 0;
     cursor: text;
 }
 
