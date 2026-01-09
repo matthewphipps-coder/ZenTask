@@ -76,6 +76,8 @@ const geminiInput = document.getElementById('gemini-input');
 const geminiSendBtn = document.getElementById('gemini-send-btn');
 
 const GEMINI_API_KEY = "AIzaSyAjhxHz04LPBigV_8iexFfgqo79NRvatL8";
+const CLAUDE_API_KEY = "YOUR_CLAUDE_API_KEY"; // Add your Claude API key here
+let selectedAIProvider = localStorage.getItem('zenAIProvider') || 'gemini'; // 'gemini' or 'claude'
 
 // Mobile Menu Logic
 const mobileMenuBtn = document.getElementById('mobile-menu-btn');
@@ -190,6 +192,15 @@ const setupListeners = (user, role) => {
         });
         migrateDataIfNeeded(userId);
         renderTasks();
+    }, (error) => {
+        console.error("Firestore Tasks Error:", error);
+        if (error.code === 'permission-denied' || error.message.includes("disabled")) {
+            console.error("Cloud Sync Error: Firestore is either uninitialized or restricted by rules.");
+            if (!window.firestoreWarned) {
+                alert("Cloud Sync is not active. Please ensure you have clicked 'Create Database' in the Firebase Console (Firestore Database tab). Until then, tasks are only saved in your browser's local cache.");
+                window.firestoreWarned = true;
+            }
+        }
     });
 
     // 2. Categories Listener
@@ -202,6 +213,8 @@ const setupListeners = (user, role) => {
         });
         migrateDataIfNeeded(userId);
         renderFilters();
+    }, (error) => {
+        console.error("Firestore Categories Error:", error);
     });
 };
 
@@ -719,6 +732,56 @@ const askGemini = async (prompt) => {
     }
 };
 
+const askClaude = async (prompt) => {
+    if (!CLAUDE_API_KEY || CLAUDE_API_KEY === "YOUR_CLAUDE_API_KEY") {
+        setTimeout(() => {
+            hideGeminiLoading();
+            addChatMessage('ai', "I'm ready to help! To activate Claude, please add your Claude API Key to app.js. (Simulated: I suggest prioritizing this task and breaking it down into smaller steps.)");
+        }, 1500);
+        return;
+    }
+
+    try {
+        const response = await fetch('https://api.anthropic.com/v1/messages', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'x-api-key': CLAUDE_API_KEY,
+                'anthropic-version': '2023-06-01'
+            },
+            body: JSON.stringify({
+                model: 'claude-3-5-sonnet-20241022',
+                max_tokens: 1024,
+                messages: [{
+                    role: 'user',
+                    content: prompt
+                }]
+            })
+        });
+        const data = await response.json();
+        hideGeminiLoading();
+        if (data.content && data.content[0].text) {
+            const aiResponse = data.content[0].text;
+            addChatMessage('ai', aiResponse);
+        } else {
+            throw new Error("Empty response");
+        }
+    } catch (error) {
+        console.error("Claude Error:", error);
+        hideGeminiLoading();
+        addChatMessage('ai', "Sorry, I encountered an error connecting to Claude. Check your API key and connection.");
+    }
+};
+
+// Unified AI function that routes to the selected provider
+const askAI = async (prompt) => {
+    if (selectedAIProvider === 'claude') {
+        await askClaude(prompt);
+    } else {
+        await askGemini(prompt);
+    }
+};
+
 const openTaskDetail = (task) => {
     activeTaskForDetail = task;
     detailTaskName.textContent = task.text;
@@ -731,10 +794,16 @@ const openTaskDetail = (task) => {
     geminiChatHistory.innerHTML = '';
     taskDetailModal.classList.add('active');
 
+    // Set radio buttons to match current selection
+    const aiProviderRadios = document.querySelectorAll('input[name="ai-provider"]');
+    aiProviderRadios.forEach(radio => {
+        radio.checked = radio.value === selectedAIProvider;
+    });
+
     // Initial Prompt
     addChatMessage('ai', `Hello! I see you want to: "${task.text}". How can I help you complete this efficiently?`);
     showGeminiLoading();
-    askGemini(`The user has a task: "${task.text}". Provide a brief, helpful suggestion on how to start or complete this task efficiently.`);
+    askAI(`The user has a task: "${task.text}". Provide a brief, helpful suggestion on how to start or complete this task efficiently.`);
 };
 
 const closeTaskDetail = () => {
@@ -748,7 +817,7 @@ geminiSendBtn.addEventListener('click', () => {
     addChatMessage('user', text);
     geminiInput.value = '';
     showGeminiLoading();
-    askGemini(text);
+    askAI(text);
 });
 
 geminiInput.addEventListener('keydown', (e) => {
@@ -762,6 +831,15 @@ taskDetailModal.addEventListener('click', (e) => {
 
 detailTaskCheckbox.addEventListener('change', () => {
     if (activeTaskForDetail) toggleTask(activeTaskForDetail);
+});
+
+// AI Provider Selection
+document.addEventListener('change', (e) => {
+    if (e.target.name === 'ai-provider') {
+        selectedAIProvider = e.target.value;
+        localStorage.setItem('zenAIProvider', selectedAIProvider);
+        console.log(`AI Provider switched to: ${selectedAIProvider}`);
+    }
 });
 
 // Expose for debugging/tests

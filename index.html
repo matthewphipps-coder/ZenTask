@@ -150,8 +150,18 @@
                 <div id="gemini-chat-history" class="chat-history">
                     <!-- Chat messages will be here -->
                 </div>
+                <div class="ai-provider-selector">
+                    <label>
+                        <input type="radio" name="ai-provider" value="gemini" checked>
+                        <span>Gemini</span>
+                    </label>
+                    <label>
+                        <input type="radio" name="ai-provider" value="claude">
+                        <span>Claude</span>
+                    </label>
+                </div>
                 <div class="chat-input-area">
-                    <input type="text" id="gemini-input" placeholder="Ask Gemini for help with this task..."
+                    <input type="text" id="gemini-input" placeholder="Ask AI for help with this task..."
                         autocomplete="off">
                     <button id="gemini-send-btn">
                         <span class="material-symbols-outlined">send</span>
