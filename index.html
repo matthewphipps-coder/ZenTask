@@ -193,16 +193,30 @@
                     <div id="gemini-chat-history" class="chat-history">
                         <!-- Chat messages will be here -->
                     </div>
-                    <div class="chat-input-container">
-                        <textarea id="gemini-input" placeholder="Ask AI for help with this task..." rows="1"></textarea>
-                        <div class="send-button-group">
-                            <select id="ai-provider-select" class="ai-provider-dropdown">
-                                <option value="gemini">Gemini</option>
-                                <option value="claude">Claude</option>
-                            </select>
-                            <button id="gemini-send-btn" class="send-btn">
-                                <span class="material-symbols-outlined">send</span>
-                            </button>
+
+                    <div class="chat-input-wrapper">
+                        <textarea id="gemini-input" placeholder="Ask AI... (Type or use voice)" rows="1"></textarea>
+
+                        <div class="chat-input-controls">
+                            <div class="chat-tools-left">
+                                <input type="file" id="chat-file-input" hidden accept="image/*,text/*">
+                                <button id="chat-attach-btn" class="chat-tool-btn" title="Upload Image/File">
+                                    <span class="material-symbols-outlined">attach_file</span>
+                                </button>
+                                <button id="chat-mic-btn" class="chat-tool-btn" title="Voice Input">
+                                    <span class="material-symbols-outlined">mic</span>
+                                </button>
+                            </div>
+
+                            <div class="send-button-group">
+                                <select id="ai-provider-select" class="ai-provider-dropdown">
+                                    <option value="gemini">Gemini</option>
+                                    <option value="claude">Claude</option>
+                                </select>
+                                <button id="gemini-send-btn" class="send-btn">
+                                    <span class="material-symbols-outlined">send</span>
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>

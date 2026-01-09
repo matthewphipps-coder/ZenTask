@@ -76,6 +76,10 @@ const geminiChatHistory = document.getElementById('gemini-chat-history');
 const geminiInput = document.getElementById('gemini-input');
 const geminiSendBtn = document.getElementById('gemini-send-btn');
 const aiProviderSelect = document.getElementById('ai-provider-select');
+const chatMicBtn = document.getElementById('chat-mic-btn');
+const chatAttachBtn = document.getElementById('chat-attach-btn');
+const chatFileInput = document.getElementById('chat-file-input');
+let currentAttachment = null;
 
 
 // API Keys are now loaded from config.js (which is gitignored)
@@ -792,18 +796,42 @@ let activeTaskForDetail = null;
 let currentChatHistory = [];
 
 const addChatMessage = (role, text, saveToHistory = true) => {
-    const msg = document.createElement('div');
-    msg.className = `chat-message ${role}`;
+    const msgDiv = document.createElement('div');
+    msgDiv.className = `chat-message ${role}`;
+
+    const msgContent = document.createElement('div');
+    msgContent.className = 'message-content';
 
     // Format AI responses
     if (role === 'ai') {
-        const formattedText = formatAIResponse(text);
-        msg.innerHTML = formattedText;
+        // Ensure formatAIResponse exists, fallback if not
+        if (typeof formatAIResponse === 'function') {
+            msgContent.innerHTML = formatAIResponse(text);
+        } else {
+            msgContent.textContent = text;
+            msgContent.style.whiteSpace = 'pre-wrap';
+        }
     } else {
-        msg.textContent = text;
+        msgContent.textContent = text;
     }
 
-    geminiChatHistory.appendChild(msg);
+    msgDiv.appendChild(msgContent);
+
+    // Text to Speech for AI
+    if (role === 'ai') {
+        const speakBtn = document.createElement('button');
+        speakBtn.className = 'chat-speak-btn';
+        speakBtn.innerHTML = '<span class="material-symbols-outlined" style="font-size: 14px;">volume_up</span>';
+        speakBtn.title = "Read Aloud";
+        speakBtn.style.cssText = "background:none; border:none; color:var(--text-secondary); cursor:pointer; margin-top:4px; opacity:0.6; display: block;";
+        speakBtn.onclick = () => {
+            const utterance = new SpeechSynthesisUtterance(text);
+            speechSynthesis.speak(utterance);
+        };
+        msgDiv.appendChild(speakBtn);
+    }
+
+    geminiChatHistory.appendChild(msgDiv);
     geminiChatHistory.scrollTop = geminiChatHistory.scrollHeight;
 
     // Save to current chat history
@@ -836,21 +864,31 @@ const hideGeminiLoading = () => {
     if (loading) loading.remove();
 };
 
-const askGemini = async (prompt) => {
+const askGemini = async (prompt, attachment = null) => {
     if (!GEMINI_API_KEY || GEMINI_API_KEY === "YOUR_GEMINI_API_KEY") {
         setTimeout(() => {
             hideGeminiLoading();
-            addChatMessage('ai', "I'm ready to help! To activate my real AI powers, please add your Gemini API Key via the Settings button (⚙️). (Simulated: I suggest breaking this task into manageable steps.)");
+            addChatMessage('ai', "I'm ready to help! To activate Gemini, please add your Google Gemini API Key via the Settings button (⚙️). (Simulated: I suggest prioritizing this task and breaking it down into smaller steps.)");
         }, 1500);
         return;
     }
 
     try {
-        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key=${GEMINI_API_KEY}`, {
+        const parts = [{ text: prompt }];
+        if (attachment) {
+            parts.push({
+                inline_data: {
+                    mime_type: attachment.mime,
+                    data: attachment.data
+                }
+            });
+        }
+
+        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-                contents: [{ parts: [{ text: prompt }] }]
+                contents: [{ parts: parts }]
             })
         });
 
@@ -938,11 +976,11 @@ const askClaude = async (prompt) => {
 };
 
 // Unified AI function that routes to the selected provider
-const askAI = async (prompt) => {
+const askAI = async (prompt, attachment = null) => {
     if (selectedAIProvider === 'claude') {
-        await askClaude(prompt);
+        await askClaude(prompt); // Claude attachment support pending
     } else {
-        await askGemini(prompt);
+        await askGemini(prompt, attachment);
     }
 };
 
@@ -1010,11 +1048,22 @@ const closeTaskDetail = () => {
 
 geminiSendBtn.addEventListener('click', () => {
     const text = geminiInput.value.trim();
-    if (!text) return;
-    addChatMessage('user', text);
+    if (!text && !currentAttachment) return;
+
+    // Visual for attachment
+    const userText = text + (currentAttachment ? ' [Attached File]' : '');
+    addChatMessage('user', userText);
+
+    // Clear Input
     geminiInput.value = '';
+
+    // Send
     showGeminiLoading();
-    askAI(text);
+    askAI(text, currentAttachment);
+
+    // Reset Attachment
+    currentAttachment = null;
+    chatAttachBtn.style.color = 'var(--text-secondary)';
 });
 
 geminiInput.addEventListener('keydown', (e) => {
@@ -1023,6 +1072,40 @@ geminiInput.addEventListener('keydown', (e) => {
         geminiSendBtn.click();
     }
 });
+
+// Chat Tool Listeners
+chatAttachBtn.addEventListener('click', () => chatFileInput.click());
+chatFileInput.addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (evt) => {
+        const base64 = evt.target.result.split(',')[1];
+        currentAttachment = { mime: file.type, data: base64 };
+        chatAttachBtn.style.color = 'var(--accent-primary)';
+        // Optional: Show preview toast
+    };
+    reader.readAsDataURL(file);
+});
+
+if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    const recognition = new SpeechRecognition();
+    recognition.continuous = false;
+    recognition.lang = 'en-US';
+
+    recognition.onstart = () => { chatMicBtn.style.color = 'red'; };
+    recognition.onend = () => { chatMicBtn.style.color = 'var(--text-secondary)'; };
+
+    recognition.onresult = (event) => {
+        const text = event.results[0][0].transcript;
+        geminiInput.value += (geminiInput.value ? ' ' : '') + text;
+    };
+
+    chatMicBtn.addEventListener('click', () => recognition.start());
+} else {
+    chatMicBtn.style.display = 'none'; // Hide if not supported
+}
 
 closeDetailBtn.addEventListener('click', closeTaskDetail);
 taskDetailModal.addEventListener('click', (e) => {
