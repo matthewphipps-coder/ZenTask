@@ -50,6 +50,9 @@
                         <button class="filter-btn" data-filter-type="status" data-filter-value="completed">
                             <span class="icon">✓</span> Done
                         </button>
+                        <button class="filter-btn bin-btn" data-filter-type="status" data-filter-value="bin">
+                            <span class="icon">🗑</span> Bin
+                        </button>
                     </div>
                 </div>
 
@@ -65,24 +68,25 @@
             </nav>
 
             <div class="sidebar-footer">
-                <div id="user-section" class="user-section">
-                    <div id="user-info" class="user-info hidden">
-                        <div class="user-meta">
-                            <span id="user-email" class="user-email"></span>
-                            <span id="user-role-badge" class="user-role-badge">Member</span>
+                <div class="minimal-footer-controls">
+                    <div id="user-info" class="user-info-minimal hidden">
+                        <div class="user-avatar-placeholder" id="user-avatar">U</div>
+                        <div class="user-text">
+                            <span id="user-email" class="user-email-minimal"></span>
+                            <span id="user-role-badge" class="user-role-minimal">Member</span>
                         </div>
-                        <button id="logout-btn" class="logout-link" title="Logout">
+                    </div>
+                    <div class="footer-actions">
+                        <button id="settings-btn" title="Settings" class="footer-icon-btn">
+                            <span class="material-symbols-outlined">settings</span>
+                        </button>
+                        <button id="theme-btn" title="Toggle Theme" class="footer-icon-btn">
+                            <span id="theme-icon" class="material-symbols-outlined">dark_mode</span>
+                        </button>
+                        <button id="logout-btn" title="Logout" class="footer-icon-btn">
                             <span class="material-symbols-outlined">logout</span>
                         </button>
                     </div>
-                </div>
-                <div class="sidebar-footer-controls">
-                    <button id="settings-btn" title="API Settings">
-                        <span class="material-symbols-outlined">settings</span>
-                    </button>
-                    <button id="theme-btn" title="Toggle Theme">
-                        <span id="theme-icon" class="material-symbols-outlined">dark_mode</span>
-                    </button>
                 </div>
             </div>
         </aside>
@@ -106,7 +110,8 @@
             </header>
 
             <div class="input-row minimal-input">
-                <input type="text" id="task-input" placeholder="Add a new task..." autocomplete="off">
+                <input type="text" id="task-input" name="zen-new-task-input" placeholder="Add a new task..."
+                    autocomplete="new-password">
             </div>
 
             <div class="task-list-wrapper">
@@ -136,39 +141,64 @@
         <div class="modal-content task-detail-content glass">
             <header class="detail-header">
                 <div class="detail-task-info">
-                    <input type="checkbox" id="detail-task-checkbox" class="task-checkbox">
-                    <div class="detail-task-meta">
-                        <h2 id="detail-task-name">Task Name</h2>
-                        <div class="meta-row">
-                            <span id="detail-task-priority" class="priority-badge">Medium</span>
-                            <span id="detail-task-status" class="status-indicator">Today</span>
-                            <span id="detail-task-category" class="category-indicator">Work</span>
-                        </div>
-                    </div>
+                    <input type="checkbox" id="detail-task-checkbox" class="task-checkbox-large">
+                    <h2 id="detail-task-name">Task Name</h2>
                 </div>
                 <button id="close-detail-btn" class="close-btn">&times;</button>
             </header>
 
-            <div class="gemini-container">
-                <div id="gemini-chat-history" class="chat-history">
-                    <!-- Chat messages will be here -->
+            <div class="detail-body">
+                <div class="detail-meta-section">
+                    <div class="meta-grid">
+                        <div class="meta-item">
+                            <label>Priority</label>
+                            <select id="detail-task-priority" class="meta-select">
+                                <option value="low">Low</option>
+                                <option value="medium">Medium</option>
+                                <option value="high">High</option>
+                            </select>
+                        </div>
+                        <div class="meta-item">
+                            <label>Status</label>
+                            <select id="detail-task-status" class="meta-select">
+                                <option value="today">Today</option>
+                                <option value="upcoming">Upcoming</option>
+                            </select>
+                        </div>
+                        <div class="meta-item">
+                            <label>Category</label>
+                            <select id="detail-task-category" class="meta-select">
+                                <option value="">None</option>
+                            </select>
+                        </div>
+                    </div>
                 </div>
-                <div class="ai-provider-selector">
-                    <label>
-                        <input type="radio" name="ai-provider" value="gemini" checked>
-                        <span>Gemini</span>
-                    </label>
-                    <label>
-                        <input type="radio" name="ai-provider" value="claude">
-                        <span>Claude</span>
-                    </label>
+
+                <div class="description-section">
+                    <label>Notes</label>
+                    <textarea id="detail-task-description" placeholder="Add notes for this task..." rows="3"></textarea>
                 </div>
-                <div class="chat-input-area">
-                    <input type="text" id="gemini-input" placeholder="Ask AI for help with this task..."
-                        autocomplete="off">
-                    <button id="gemini-send-btn">
-                        <span class="material-symbols-outlined">send</span>
-                    </button>
+
+                <div class="ai-chat-section">
+                    <div class="section-title">
+                        <span class="ai-icon">✨</span>
+                        <span>AI Assistant</span>
+                    </div>
+                    <div id="gemini-chat-history" class="chat-history">
+                        <!-- Chat messages will be here -->
+                    </div>
+                    <div class="chat-input-container">
+                        <textarea id="gemini-input" placeholder="Ask AI for help with this task..." rows="1"></textarea>
+                        <div class="send-button-group">
+                            <select id="ai-provider-select" class="ai-provider-dropdown">
+                                <option value="gemini">Gemini</option>
+                                <option value="claude">Claude</option>
+                            </select>
+                            <button id="gemini-send-btn" class="send-btn">
+                                <span class="material-symbols-outlined">send</span>
+                            </button>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>

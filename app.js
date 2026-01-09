@@ -63,17 +63,20 @@ const userRoleBadge = document.getElementById('user-role-badge');
 const logoutBtn = document.getElementById('logout-btn');
 const themeIcon = document.getElementById('theme-icon');
 
-// Task Detail & Gemini Elements
+// Task Detail & AI Elements
 const taskDetailModal = document.getElementById('task-detail-modal');
 const detailTaskName = document.getElementById('detail-task-name');
 const detailTaskCheckbox = document.getElementById('detail-task-checkbox');
 const detailTaskPriority = document.getElementById('detail-task-priority');
 const detailTaskStatus = document.getElementById('detail-task-status');
 const detailTaskCategory = document.getElementById('detail-task-category');
+const detailTaskDescription = document.getElementById('detail-task-description');
 const closeDetailBtn = document.getElementById('close-detail-btn');
 const geminiChatHistory = document.getElementById('gemini-chat-history');
 const geminiInput = document.getElementById('gemini-input');
 const geminiSendBtn = document.getElementById('gemini-send-btn');
+const aiProviderSelect = document.getElementById('ai-provider-select');
+
 
 // API Keys are now loaded from config.js (which is gitignored)
 // For GitHub Pages or if config.js is missing, prompt user for API key
@@ -368,6 +371,14 @@ const renderTasks = () => {
 
     // Client-side filtering
     const filteredTasks = tasks.filter(task => {
+        // 1. Bin Filter (Deleted tasks)
+        if (currentFilter.value === 'bin') {
+            return task.deleted === true;
+        }
+
+        // 2. Hide deleted tasks in all other views
+        if (task.deleted === true) return false;
+
         let matchesFilter = true;
         if (currentFilter.type === 'status') {
             if (currentFilter.value === 'all') matchesFilter = true;
@@ -481,6 +492,7 @@ const addTask = async () => {
         await addDoc(collection(db, "tasks"), {
             text,
             completed: false,
+            deleted: false,
             priority: 'medium',
             status,
             category,
@@ -503,8 +515,8 @@ const toggleTask = async (task) => {
 };
 
 const deleteTask = async (id) => {
-    if (confirm('Delete this task?')) {
-        await deleteDoc(doc(db, "tasks", id));
+    if (confirm('Move this task to the Bin?')) {
+        await updateDoc(doc(db, "tasks", id), { deleted: true });
     }
 };
 
@@ -685,6 +697,8 @@ const initStatusFilters = () => {
                 confetti.shoot();
             } else if (['today', 'upcoming'].includes(value)) {
                 await updateDoc(doc(db, "tasks", taskId), { status: value, completed: false });
+            } else if (value === 'bin') {
+                await updateDoc(doc(db, "tasks", taskId), { deleted: true });
             } else if (value === 'all') {
                 // Dragging to 'All' generally implies resetting to a default 'active' state
                 await updateDoc(doc(db, "tasks", taskId), { completed: false });
@@ -693,16 +707,120 @@ const initStatusFilters = () => {
     });
 };
 
-// --- Task Detail & Gemini Logic ---
-let activeTaskForDetail = null;
+// --- AI Response Formatting & Chat History Utilities ---
 
-const addChatMessage = (role, text) => {
+// Formats AI responses by removing quotes, asterisks, and converting markdown to HTML
+const formatAIResponse = (text) => {
+    // Remove leading/trailing quotes
+    text = text.replace(/^["']|["']$/g, '');
+
+
+    // 1. Handle Code Blocks (pre-processing to protect them)
+    const codeBlocks = [];
+    text = text.replace(/```(\w+)?\n?([\s\S]*?)```/g, (match, lang, code) => {
+        const placeholder = `__CODE_BLOCK_${codeBlocks.length}__`;
+        codeBlocks.push({ lang: lang || 'text', code: code.trim() });
+        return placeholder;
+    });
+
+    // 2. Handle Inline Code
+    text = text.replace(/`([^`]+)`/g, '<code>$1</code>');
+
+    // 3. Handle Bold Text
+    text = text.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+    text = text.replace(/\*([a-zA-Z0-9][^*]+)\*/g, '<strong>$1</strong>'); // Handle single asterisks too, but more carefully
+
+    // 4. Handle Lists (Numbered)
+    text = text.replace(/^\d+\.\s+(.+)$/gm, '<li>$1</li>');
+
+    // 5. Handle Lists (Bullet) - dash, asterisk, bullet
+    text = text.replace(/^[-*•]\s+(.+)$/gm, '<li>$1</li>');
+
+    // 6. Wrap lists in ul/ol (simplified to ul for consistency)
+    text = text.replace(/(<li>.*?<\/li>\n?)+/g, (match) => {
+        return '<ul>' + match + '</ul>';
+    });
+
+    // 7. Handle Line Breaks & Paragraphs
+    const paragraphs = text.split('\n\n').filter(p => p.trim());
+    text = paragraphs.map(p => {
+        // Restore code blocks first to check if paragraph is JUST a code block
+        if (p.trim().startsWith('__CODE_BLOCK_')) {
+            return p;
+        }
+        // Don't wrap if already has HTML tags like lists
+        if (p.includes('<ul>') || p.includes('<ol>') || p.includes('<li>')) {
+            return p;
+        }
+        return '<p>' + p.replace(/\n/g, '<br>') + '</p>';
+    }).join('');
+
+    // 8. Restore Code Blocks
+    codeBlocks.forEach((block, index) => {
+        const placeholder = `__CODE_BLOCK_${index}__`;
+        const html = `<pre><code class="language-${block.lang}">${block.code.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</code></pre>`;
+        text = text.replace(placeholder, html);
+    });
+
+    return text;
+};
+
+// Save chat history to Firestore
+const saveChatHistory = async (taskId, chatHistory) => {
+    if (!currentUser || !taskId) return;
+
+    try {
+        await updateDoc(doc(db, "tasks", taskId), {
+            chatHistory: chatHistory,
+            lastChatUpdate: new Date().toISOString()
+        });
+    } catch (error) {
+        console.error("Error saving chat history:", error);
+    }
+};
+
+// Load chat history from task
+const loadChatHistory = (task) => {
+    if (task.chatHistory && Array.isArray(task.chatHistory)) {
+        return task.chatHistory;
+    }
+    return [];
+};
+
+// --- Task Detail & AI Logic ---
+let activeTaskForDetail = null;
+let currentChatHistory = [];
+
+const addChatMessage = (role, text, saveToHistory = true) => {
     const msg = document.createElement('div');
     msg.className = `chat-message ${role}`;
-    msg.textContent = text;
+
+    // Format AI responses
+    if (role === 'ai') {
+        const formattedText = formatAIResponse(text);
+        msg.innerHTML = formattedText;
+    } else {
+        msg.textContent = text;
+    }
+
     geminiChatHistory.appendChild(msg);
     geminiChatHistory.scrollTop = geminiChatHistory.scrollHeight;
+
+    // Save to current chat history
+    if (saveToHistory) {
+        currentChatHistory.push({
+            role,
+            text,
+            timestamp: new Date().toISOString()
+        });
+
+        // Save to database if we have an active task
+        if (activeTaskForDetail) {
+            saveChatHistory(activeTaskForDetail.id, currentChatHistory);
+        }
+    }
 };
+
 
 const showGeminiLoading = () => {
     const loading = document.createElement('div');
@@ -722,31 +840,45 @@ const askGemini = async (prompt) => {
     if (!GEMINI_API_KEY || GEMINI_API_KEY === "YOUR_GEMINI_API_KEY") {
         setTimeout(() => {
             hideGeminiLoading();
-            addChatMessage('ai', "I'm ready to help! To activate my real AI powers, please add your Gemini API Key to app.js. (Simulated: I suggest breaking this task into manageable steps.)");
+            addChatMessage('ai', "I'm ready to help! To activate my real AI powers, please add your Gemini API Key via the Settings button (⚙️). (Simulated: I suggest breaking this task into manageable steps.)");
         }, 1500);
         return;
     }
 
     try {
-        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`, {
+        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key=${GEMINI_API_KEY}`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 contents: [{ parts: [{ text: prompt }] }]
             })
         });
+
         const data = await response.json();
+
+        // Check for API errors
+        if (!response.ok) {
+            const errorMsg = data.error?.message || `HTTP ${response.status}: ${response.statusText}`;
+            console.error("Gemini API Error:", data);
+            hideGeminiLoading();
+            addChatMessage('ai', `❌ API Error: ${errorMsg}\n\nPlease check your API key in Settings (⚙️). Make sure it's valid and has the Generative Language API enabled.`);
+            return;
+        }
+
         hideGeminiLoading();
-        if (data.candidates && data.candidates[0].content.parts[0].text) {
+        if (data.candidates && data.candidates[0]?.content?.parts?.[0]?.text) {
             const aiResponse = data.candidates[0].content.parts[0].text;
             addChatMessage('ai', aiResponse);
+        } else if (data.error) {
+            addChatMessage('ai', `❌ Error: ${data.error.message || 'Unknown error'}`);
         } else {
-            throw new Error("Empty response");
+            console.error("Unexpected response format:", data);
+            addChatMessage('ai', "❌ Received an unexpected response format. Check console for details.");
         }
     } catch (error) {
         console.error("Gemini Error:", error);
         hideGeminiLoading();
-        addChatMessage('ai', "Sorry, I encountered an error connecting to my neurons. Check your API key and connection.");
+        addChatMessage('ai', `❌ Connection Error: ${error.message}\n\nPlease check your internet connection and API key in Settings (⚙️).`);
     }
 };
 
@@ -754,7 +886,7 @@ const askClaude = async (prompt) => {
     if (!CLAUDE_API_KEY || CLAUDE_API_KEY === "YOUR_CLAUDE_API_KEY") {
         setTimeout(() => {
             hideGeminiLoading();
-            addChatMessage('ai', "I'm ready to help! To activate Claude, please add your Claude API Key to app.js. (Simulated: I suggest prioritizing this task and breaking it down into smaller steps.)");
+            addChatMessage('ai', "I'm ready to help! To activate Claude, please add your Claude API Key via the Settings button (⚙️). (Simulated: I suggest prioritizing this task and breaking it down into smaller steps.)");
         }, 1500);
         return;
     }
@@ -776,18 +908,32 @@ const askClaude = async (prompt) => {
                 }]
             })
         });
+
         const data = await response.json();
+
+        // Check for API errors
+        if (!response.ok) {
+            const errorMsg = data.error?.message || `HTTP ${response.status}: ${response.statusText}`;
+            console.error("Claude API Error:", data);
+            hideGeminiLoading();
+            addChatMessage('ai', `❌ API Error: ${errorMsg}\n\nPlease check your API key in Settings (⚙️).`);
+            return;
+        }
+
         hideGeminiLoading();
-        if (data.content && data.content[0].text) {
+        if (data.content && data.content[0]?.text) {
             const aiResponse = data.content[0].text;
             addChatMessage('ai', aiResponse);
+        } else if (data.error) {
+            addChatMessage('ai', `❌ Error: ${data.error.message || 'Unknown error'}`);
         } else {
-            throw new Error("Empty response");
+            console.error("Unexpected response format:", data);
+            addChatMessage('ai', "❌ Received an unexpected response format. Check console for details.");
         }
     } catch (error) {
         console.error("Claude Error:", error);
         hideGeminiLoading();
-        addChatMessage('ai', "Sorry, I encountered an error connecting to Claude. Check your API key and connection.");
+        addChatMessage('ai', `❌ Connection Error: ${error.message}\n\nPlease check your internet connection and API key in Settings (⚙️).`);
     }
 };
 
@@ -802,27 +948,58 @@ const askAI = async (prompt) => {
 
 const openTaskDetail = (task) => {
     activeTaskForDetail = task;
+
+    // Set task name and checkbox
     detailTaskName.textContent = task.text;
     detailTaskCheckbox.checked = task.completed;
-    detailTaskPriority.textContent = task.priority;
-    detailTaskStatus.textContent = task.status || 'today';
-    detailTaskCategory.textContent = task.category || 'Ungrouped';
 
-    // Reset Chat
-    geminiChatHistory.innerHTML = '';
-    taskDetailModal.classList.add('active');
+    // Set priority dropdown
+    detailTaskPriority.value = task.priority || 'medium';
 
-    // Set radio buttons to match current selection
-    const aiProviderRadios = document.querySelectorAll('input[name="ai-provider"]');
-    aiProviderRadios.forEach(radio => {
-        radio.checked = radio.value === selectedAIProvider;
+    // Set status dropdown
+    detailTaskStatus.value = task.status || 'today';
+
+    // Populate category dropdown with current categories
+    detailTaskCategory.innerHTML = '<option value="">None</option>';
+    customCategories.forEach(cat => {
+        const option = document.createElement('option');
+        option.value = cat.name;
+        option.textContent = cat.name;
+        if (task.category === cat.name) {
+            option.selected = true;
+        }
+        detailTaskCategory.appendChild(option);
     });
 
-    // Initial Prompt
-    addChatMessage('ai', `Hello! I see you want to: "${task.text}". How can I help you complete this efficiently?`);
-    showGeminiLoading();
-    askAI(`The user has a task: "${task.text}". Provide a brief, helpful suggestion on how to start or complete this task efficiently.`);
+    // Set description
+    detailTaskDescription.value = task.description || '';
+
+    // Set AI provider dropdown
+    aiProviderSelect.value = selectedAIProvider;
+
+    // Load chat history
+    currentChatHistory = loadChatHistory(task);
+    geminiChatHistory.innerHTML = '';
+
+    if (currentChatHistory.length > 0) {
+        // Restore previous chat messages
+        currentChatHistory.forEach(msg => {
+            addChatMessage(msg.role, msg.text, false); // Don't save again
+        });
+    } else {
+        // Initial greeting if no history
+        addChatMessage('ai', `Hello! I see you want to: "${task.text}". How can I help you complete this efficiently?`);
+    }
+
+    taskDetailModal.classList.add('active');
+
+    // Scroll to bottom after layout update
+    setTimeout(() => {
+        geminiChatHistory.scrollTop = geminiChatHistory.scrollHeight;
+    }, 0);
 };
+
+
 
 const closeTaskDetail = () => {
     taskDetailModal.classList.remove('active');
@@ -839,7 +1016,10 @@ geminiSendBtn.addEventListener('click', () => {
 });
 
 geminiInput.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter') geminiSendBtn.click();
+    if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        geminiSendBtn.click();
+    }
 });
 
 closeDetailBtn.addEventListener('click', closeTaskDetail);
@@ -851,14 +1031,54 @@ detailTaskCheckbox.addEventListener('change', () => {
     if (activeTaskForDetail) toggleTask(activeTaskForDetail);
 });
 
-// AI Provider Selection
-document.addEventListener('change', (e) => {
-    if (e.target.name === 'ai-provider') {
-        selectedAIProvider = e.target.value;
-        localStorage.setItem('zenAIProvider', selectedAIProvider);
-        console.log(`AI Provider switched to: ${selectedAIProvider}`);
+// Task detail field changes - auto-save
+detailTaskPriority.addEventListener('change', async () => {
+    if (activeTaskForDetail) {
+        await updateDoc(doc(db, "tasks", activeTaskForDetail.id), {
+            priority: detailTaskPriority.value
+        });
+        activeTaskForDetail.priority = detailTaskPriority.value;
     }
 });
+
+detailTaskStatus.addEventListener('change', async () => {
+    if (activeTaskForDetail) {
+        await updateDoc(doc(db, "tasks", activeTaskForDetail.id), {
+            status: detailTaskStatus.value
+        });
+        activeTaskForDetail.status = detailTaskStatus.value;
+    }
+});
+
+detailTaskCategory.addEventListener('change', async () => {
+    if (activeTaskForDetail) {
+        const category = detailTaskCategory.value || null;
+        await updateDoc(doc(db, "tasks", activeTaskForDetail.id), { category });
+        activeTaskForDetail.category = category;
+    }
+});
+
+// Description auto-save with debounce
+let descriptionSaveTimeout;
+detailTaskDescription.addEventListener('input', () => {
+    if (!activeTaskForDetail) return;
+
+    clearTimeout(descriptionSaveTimeout);
+    descriptionSaveTimeout = setTimeout(async () => {
+        await updateDoc(doc(db, "tasks", activeTaskForDetail.id), {
+            description: detailTaskDescription.value
+        });
+        activeTaskForDetail.description = detailTaskDescription.value;
+    }, 1000); // Save 1 second after user stops typing
+});
+
+// AI Provider Selection from dropdown
+aiProviderSelect.addEventListener('change', () => {
+    selectedAIProvider = aiProviderSelect.value;
+    localStorage.setItem('zenAIProvider', selectedAIProvider);
+    console.log(`AI Provider switched to: ${selectedAIProvider}`);
+});
+
 
 // Expose for debugging/tests
 window.ZenTask = {

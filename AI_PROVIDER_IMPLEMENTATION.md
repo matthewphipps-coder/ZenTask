@@ -57,10 +57,11 @@ const CLAUDE_API_KEY = "YOUR_CLAUDE_API_KEY";  // Add your key here
 ## Technical Details
 
 - **Claude Model**: claude-3-5-sonnet-20241022
-- **Gemini Model**: gemini-flash-latest
+- **Gemini Model**: gemini-flash-latest (uses gemini-2.5-flash-preview internally)
 - **API Endpoints**:
   - Gemini: `https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent`
   - Claude: `https://api.anthropic.com/v1/messages`
+- **Error Handling**: Enhanced error messages show specific API errors, HTTP status codes, and helpful guidance for troubleshooting
 
 ## Testing Results
 
