@@ -1107,7 +1107,7 @@ body {
 
 /* Task Detail Modal & AI Chat */
 .task-detail-content {
-    width: 600px !important;
+    width: 750px !important;
     max-width: 95vw;
     height: 85vh;
     /* Fixed Height */
@@ -1441,33 +1441,28 @@ body {
 }
 
 /* Chat Input */
-.chat-input-container {
+/* Chat Input Row (Replaces wrapper) */
+.chat-input-row {
     display: flex;
-    align-items: center;
-    gap: 8px;
-    background: rgba(255, 255, 255, 0.04);
-    border: 1px solid var(--glass-border);
-    padding: 6px;
+    align-items: flex-end;
+    /* Align bottom for multiline input */
+    gap: 12px;
+    background: rgba(0, 0, 0, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.1);
     border-radius: 12px;
-    flex-shrink: 0;
+    padding: 8px 12px;
     transition: all 0.2s;
 }
 
-/* Chat Input Wrapper & Controls */
-.chat-input-wrapper {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-    background: rgba(0, 0, 0, 0.2);
-    border: 1px solid var(--glass-border);
-    border-radius: 12px;
-    padding: 8px 12px;
-    transition: border-color 0.2s;
+/* Neutral focus state */
+.chat-input-row:focus-within {
+    border-color: rgba(255, 255, 255, 0.2);
+    background: rgba(0, 0, 0, 0.3);
 }
 
-.chat-input-wrapper:focus-within {
-    border-color: var(--accent-primary);
-    background: rgba(0, 0, 0, 0.3);
+.input-area {
+    flex: 1;
+    display: flex;
 }
 
 #gemini-input {
@@ -1477,99 +1472,101 @@ body {
     color: var(--text-primary);
     font-size: 14px;
     outline: none;
-    padding: 4px 0;
+    padding: 6px 0;
     font-family: 'Inter', sans-serif;
     resize: none;
     min-height: 24px;
     max-height: 120px;
 }
 
-.chat-input-controls {
+/* Action Group */
+.chat-action-group {
     display: flex;
-    justify-content: space-between;
     align-items: center;
-    border-top: 1px solid rgba(255, 255, 255, 0.05);
-    /* Separator */
-    padding-top: 6px;
+    gap: 8px;
+    padding-bottom: 2px;
+    flex-shrink: 0;
 }
 
-.chat-tools-left {
+.tool-icons {
     display: flex;
     gap: 2px;
+    border-right: 1px solid rgba(255, 255, 255, 0.1);
+    padding-right: 8px;
 }
 
-.chat-tool-btn {
+.icon-btn-micro {
     background: transparent;
     border: none;
     color: var(--text-secondary);
     padding: 6px;
     border-radius: 6px;
     cursor: pointer;
-    transition: all 0.2s;
     display: flex;
     align-items: center;
-    justify-content: center;
+    transition: all 0.2s;
 }
 
-.chat-tool-btn:hover {
+.icon-btn-micro:hover {
     color: var(--text-primary);
     background: rgba(255, 255, 255, 0.1);
 }
 
-.chat-tool-btn .material-symbols-outlined {
+.icon-btn-micro span {
     font-size: 18px;
 }
 
-/* Ensure history grows */
-.chat-history {
-    flex-grow: 1;
-    /* More space */
-    min-height: 200px;
-    min-height: 200px;
+/* Send Combo */
+.send-combo {
+    display: flex;
+    align-items: center;
+    gap: 2px;
 }
 
-.ai-provider-dropdown {
+.provider-select-mini {
     background: transparent;
+    /* No background */
+    border: none;
     color: var(--text-secondary);
-    border: none;
-    font-size: 12px;
-    padding: 4px;
-    border-radius: 6px;
-    outline: none;
+    font-size: 11px;
     cursor: pointer;
+    outline: none;
+    text-align: right;
+    padding: 4px;
+    border-radius: 4px;
+    -webkit-appearance: none;
+    /* Hide default arrow to be clean */
+    appearance: none;
 }
 
-.ai-provider-dropdown:hover {
+.provider-select-mini:hover {
     color: var(--text-primary);
-    background: rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.05);
 }
 
-.ai-provider-dropdown:focus {
-    border-color: var(--accent-primary);
-}
-
-.send-btn {
+.send-btn-mini {
     background: var(--accent-primary);
-    color: white;
     border: none;
-    width: 40px;
-    height: 40px;
-    border-radius: 10px;
+    color: #0f172a;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
     transition: all 0.2s;
-    flex-shrink: 0;
+    margin-left: 4px;
 }
 
-.send-btn:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 16px rgba(168, 85, 247, 0.35);
+.send-btn-mini:hover {
+    transform: scale(1.1);
+    box-shadow: 0 0 12px rgba(98, 216, 78, 0.4);
 }
 
-.send-btn:active {
-    transform: translateY(0);
+.send-btn-mini span {
+    font-size: 18px;
+    font-weight: 700;
 }
 
 .loading-indicator {

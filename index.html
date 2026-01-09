@@ -178,14 +178,15 @@
                         </select>
                     </div>
                 </div>
+
+                <!-- Notes moved to static top area -->
+                <div class="description-section">
+                    <textarea id="detail-task-description" placeholder="Add notes..." rows="1"></textarea>
+                </div>
             </div>
 
-            <!-- Scrollable Content -->
+            <!-- Scrollable Content (Only Chat History now) -->
             <div class="detail-scroll-area">
-                <div class="description-section">
-                    <textarea id="detail-task-description" placeholder="Add notes..." rows="2"></textarea>
-                </div>
-
                 <div class="chat-history-container">
                     <div id="gemini-chat-history" class="chat-history">
                         <!-- Chat messages -->
@@ -195,27 +196,31 @@
 
             <!-- Fixed Footer Input -->
             <div class="detail-bottom-fixed">
-                <div class="chat-input-wrapper">
-                    <textarea id="gemini-input" placeholder="Ask AI... (Type or use voice)" rows="1"></textarea>
+                <div class="chat-input-row">
+                    <div class="input-area">
+                        <textarea id="gemini-input" placeholder="Ask AI..." rows="1"></textarea>
+                    </div>
 
-                    <div class="chat-input-controls">
-                        <div class="chat-tools-left">
+                    <div class="chat-action-group">
+                        <!-- Tools -->
+                        <div class="tool-icons">
                             <input type="file" id="chat-file-input" hidden accept="image/*,text/*">
-                            <button id="chat-attach-btn" class="chat-tool-btn" title="Upload Image/File">
+                            <button id="chat-attach-btn" class="icon-btn-micro" title="Attach">
                                 <span class="material-symbols-outlined">attach_file</span>
                             </button>
-                            <button id="chat-mic-btn" class="chat-tool-btn" title="Voice Input">
+                            <button id="chat-mic-btn" class="icon-btn-micro" title="Voice">
                                 <span class="material-symbols-outlined">mic</span>
                             </button>
                         </div>
 
-                        <div class="send-button-group">
-                            <select id="ai-provider-select" class="ai-provider-dropdown">
+                        <!-- Provider + Send Combined -->
+                        <div class="send-combo">
+                            <select id="ai-provider-select" class="provider-select-mini" title="Select AI">
                                 <option value="gemini">Gemini</option>
                                 <option value="claude">Claude</option>
                             </select>
-                            <button id="gemini-send-btn" class="send-btn">
-                                <span class="material-symbols-outlined">send</span>
+                            <button id="gemini-send-btn" class="send-btn-mini">
+                                <span class="material-symbols-outlined">arrow_upward</span>
                             </button>
                         </div>
                     </div>
