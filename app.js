@@ -57,21 +57,11 @@ const modalCreateBtn = document.getElementById('modal-create-btn');
 const modalCancelBtn = document.getElementById('modal-cancel-btn');
 
 const authModal = document.getElementById('auth-modal');
-const authEmailInput = document.getElementById('auth-email');
-const authPasswordInput = document.getElementById('auth-password');
-const authSubmitBtn = document.getElementById('auth-submit-btn');
-const authSwitchBtn = document.getElementById('auth-switch-btn');
-const authCancelBtn = document.getElementById('auth-cancel-btn');
-const authTitle = document.getElementById('auth-title');
-const authDesc = document.getElementById('auth-desc');
-const authErrorMsg = document.getElementById('auth-error-msg');
-
-const authBtn = document.getElementById('auth-btn');
-const logoutBtn = document.getElementById('logout-btn');
-const userSection = document.getElementById('user-section');
 const userInfo = document.getElementById('user-info');
 const userEmailDisplay = document.getElementById('user-email');
-const userRoleDisplay = document.getElementById('user-role');
+const userRoleBadge = document.getElementById('user-role-badge');
+const logoutBtn = document.getElementById('logout-btn');
+const themeIcon = document.getElementById('theme-icon');
 
 // Mobile Menu Logic
 const mobileMenuBtn = document.getElementById('mobile-menu-btn');
@@ -225,9 +215,9 @@ onAuthStateChanged(auth, async (user) => {
 
         // Fetch and display role
         const role = await fetchUserRole(user.uid);
-        if (userRoleDisplay) {
-            userRoleDisplay.textContent = role;
-            userRoleDisplay.className = `user-role-badge ${role.toLowerCase()}`;
+        if (userRoleBadge) {
+            userRoleBadge.textContent = role;
+            userRoleBadge.className = `user-role-badge ${role.toLowerCase()}`;
         }
 
         setupListeners(user, role);
@@ -577,11 +567,17 @@ taskInput.addEventListener('keydown', (e) => {
     if (e.key === 'Enter') { e.preventDefault(); addTask(); }
 });
 searchInput.addEventListener('input', (e) => { searchQuery = e.target.value; renderTasks(); });
-themeBtn.addEventListener('click', () => {
-    document.body.classList.toggle('light-theme');
-    const isLight = document.body.classList.contains('light-theme');
-    themeBtn.textContent = isLight ? '☀️ Light Mode' : '🌙 Dark Mode';
+const toggleTheme = (isLight) => {
+    document.body.classList.toggle('light-theme', isLight);
+    if (themeIcon) {
+        themeIcon.textContent = isLight ? 'light_mode' : 'dark_mode';
+    }
     localStorage.setItem('zenTheme', isLight ? 'light' : 'dark');
+};
+
+themeBtn.addEventListener('click', () => {
+    const isCurrentlyLight = document.body.classList.contains('light-theme');
+    toggleTheme(!isCurrentlyLight);
 });
 
 // Event Listeners for Modal Logic are handled below
@@ -598,12 +594,9 @@ modalCategoryInput.addEventListener('keydown', (e) => {
 
 
 // Init
-if (!isDarkMode) {
-    document.body.classList.add('light-theme');
-    themeBtn.textContent = '☀️ Light Mode';
-} else {
-    themeBtn.textContent = '🌙 Dark Mode';
-}
+const savedTheme = localStorage.getItem('zenTheme');
+const shouldBeLight = savedTheme === 'light' || (!savedTheme && !isDarkMode);
+toggleTheme(shouldBeLight);
 
 const initStatusFilters = () => {
     document.querySelectorAll('#status-filters .filter-btn').forEach(btn => {

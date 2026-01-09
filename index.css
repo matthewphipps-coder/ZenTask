@@ -15,6 +15,21 @@
     --priority-high: #fb7185;
 }
 
+.material-symbols-outlined {
+    font-family: 'Material Symbols Outlined' !important;
+    font-weight: normal;
+    font-style: normal;
+    font-size: 24px;
+    line-height: 1;
+    letter-spacing: normal;
+    text-transform: none;
+    display: inline-block;
+    white-space: nowrap;
+    word-wrap: normal;
+    direction: ltr;
+    -webkit-font-smoothing: antialiased;
+}
+
 .light-theme {
     --bg-primary: #f8fafc;
     --text-primary: #0f172a;
@@ -86,25 +101,43 @@ body {
 
 /* Sidebar */
 .sidebar {
-    width: 240px;
-    padding: 30px;
+    width: 200px;
+    padding: 24px;
     display: flex;
     flex-direction: column;
     border: none;
     background: transparent;
-    /* Minimalist: Remove sidebar background */
     backdrop-filter: none;
     box-shadow: none;
 }
 
 .logo {
-    margin-bottom: 40px;
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    margin-bottom: 24px;
+    font-family: 'Outfit', sans-serif;
+    font-size: 22px;
+    font-weight: 600;
+    letter-spacing: -0.5px;
+}
+
+.logo-txt {
     color: var(--text-primary);
 }
 
-.logo-icon {
-    font-size: 24px;
+.logo-accent {
     color: var(--accent-primary);
+    position: relative;
+}
+
+.logo-accent::after {
+    content: '✧';
+    position: absolute;
+    top: -8px;
+    right: -12px;
+    font-size: 14px;
+    opacity: 0.8;
 }
 
 .sidebar-nav {
@@ -784,110 +817,118 @@ body {
         font-size: 14px;
     }
 }
-/* Auth UI */
-.user-section {
-    margin-bottom: 20px;
-}
 
-.auth-btn {
-    background: var(--accent-primary);
-    color: white;
-    border: none;
-    padding: 8px 16px;
-    border-radius: 8px;
-    font-size: 14px;
-    font-weight: 500;
-    cursor: pointer;
-    transition: all 0.2s;
-    width: 100%;
-}
-
-.auth-btn:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3);
+/* Sidebar Footer & User Info */
+.sidebar-footer {
+    margin-top: auto;
+    padding-top: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
 }
 
 .user-info {
     display: flex;
-    flex-direction: column;
-    gap: 5px;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 12px;
+    padding: 12px;
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    position: relative;
 }
 
 .user-info.hidden {
     display: none;
 }
 
+.user-meta {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    overflow: hidden;
+    flex: 1;
+}
+
 .user-email {
-    font-size: 12px;
+    font-size: 10px;
     color: var(--text-secondary);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    display: block;
-}
-
-.logout-link {
-    background: transparent;
-    border: none;
-    color: var(--accent-primary);
-    font-size: 12px;
-    cursor: pointer;
-    text-align: left;
-    padding: 0;
-    text-decoration: underline;
-    opacity: 0.8;
-}
-
-.logout-link:hover {
-    opacity: 1;
-}
-
-.modal-actions.vertical {
-    flex-direction: column;
-}
-
-.modal-actions.vertical button {
-    width: 100%;
-}
-
-.auth-form input {
-    margin-bottom: 12px !important;
-}
-
-#auth-error-msg {
-    margin-top: -5px;
-    margin-bottom: 15px;
-}
-
-/* User Meta & Role Badge */
-.user-meta {
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
-    margin-bottom: 5px;
 }
 
 .user-role-badge {
     display: inline-block;
-    padding: 2px 8px;
-    background: rgba(139, 92, 246, 0.2);
-    border: 1px solid rgba(139, 92, 246, 0.4);
+    padding: 1px 6px;
+    background: rgba(139, 92, 246, 0.15);
+    border: 1px solid rgba(139, 92, 246, 0.3);
     color: var(--accent-primary);
-    border-radius: 12px;
-    font-size: 10px;
-    font-weight: 600;
+    border-radius: 4px;
+    font-size: 8px;
+    font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.5px;
     width: fit-content;
 }
 
-.auth-notice {
-    font-size: 12px;
-    color: var(--accent-primary);
-    background: rgba(139, 92, 246, 0.1);
-    padding: 8px;
+.user-role-badge.admin {
+    background: rgba(245, 158, 11, 0.15);
+    border-color: rgba(245, 158, 11, 0.3);
+    color: #f59e0b;
+}
+
+.logout-link {
+    background: transparent;
+    border: none;
+    color: var(--text-secondary);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    padding: 4px;
     border-radius: 6px;
-    margin-bottom: 15px;
-    text-align: center;
-    border: 1px dashed rgba(139, 92, 246, 0.3);
+    transition: all 0.2s;
+    flex-shrink: 0;
+}
+
+.logout-link:hover {
+    background: rgba(239, 68, 68, 0.1);
+    color: #ef4444;
+}
+
+.logout-link .material-symbols-outlined {
+    font-size: 18px;
+}
+
+.sidebar-footer-controls {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding-top: 4px;
+}
+
+#theme-btn {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    color: var(--text-secondary);
+    cursor: pointer;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    transition: all 0.2s;
+}
+
+#theme-btn:hover {
+    background: rgba(255, 255, 255, 0.08);
+    color: var(--text-primary);
+}
+
+#theme-btn .material-symbols-outlined {
+    font-size: 20px;
 }

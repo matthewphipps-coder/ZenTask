@@ -12,6 +12,8 @@
     <link
         href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Outfit:wght@300;400;500;600&display=swap"
         rel="stylesheet">
+    <link rel="stylesheet"
+        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" />
     <link rel="stylesheet" href="index.css">
     <script>
         // Early redirect if not "logged in" (using a simple session check or just let app.js handle it)
@@ -27,8 +29,10 @@
 
     <main class="app-container">
         <aside class="sidebar glass">
-            <header class="logo">
-                <span class="logo-icon">✧</span>
+            <header class="sidebar-header">
+                <div class="logo">
+                    <span class="logo-txt">Zen</span><span class="logo-accent">Task</span>
+                </div>
             </header>
 
             <nav class="sidebar-nav">
@@ -65,13 +69,17 @@
                     <div id="user-info" class="user-info hidden">
                         <div class="user-meta">
                             <span id="user-email" class="user-email"></span>
-                            <span id="user-role" class="user-role-badge">Member</span>
+                            <span id="user-role-badge" class="user-role-badge">Member</span>
                         </div>
-                        <button id="logout-btn" class="logout-link">Logout</button>
+                        <button id="logout-btn" class="logout-link" title="Logout">
+                            <span class="material-symbols-outlined">logout</span>
+                        </button>
                     </div>
                 </div>
-                <div class="theme-toggle">
-                    <button id="theme-btn" title="Toggle Theme">☾</button>
+                <div class="sidebar-footer-controls">
+                    <button id="theme-btn" title="Toggle Theme">
+                        <span id="theme-icon" class="material-symbols-outlined">dark_mode</span>
+                    </button>
                 </div>
             </div>
         </aside>
