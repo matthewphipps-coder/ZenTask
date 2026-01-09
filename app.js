@@ -989,9 +989,10 @@ const openTaskDetail = (task) => {
     activeTaskForDetail = task;
 
     // Set task name and checkbox
-    // Set task name and checkbox
     detailTaskName.value = task.text;
     detailTaskName.readOnly = true;
+    detailTaskName.style.height = 'auto';
+    detailTaskName.style.height = (detailTaskName.scrollHeight < 32 ? 32 : detailTaskName.scrollHeight) + 'px'; // Auto-resize initial
     detailTaskCheckbox.checked = task.completed;
 
     // Set priority dropdown
@@ -1131,8 +1132,16 @@ detailTaskName.addEventListener('blur', async () => {
     }
 });
 
+detailTaskName.addEventListener('input', () => {
+    detailTaskName.style.height = 'auto';
+    detailTaskName.style.height = detailTaskName.scrollHeight + 'px';
+});
+
 detailTaskName.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter') detailTaskName.blur();
+    if (e.key === 'Enter') {
+        e.preventDefault(); // Prevent newline
+        detailTaskName.blur();
+    }
 });
 
 // Task detail field changes - auto-save
