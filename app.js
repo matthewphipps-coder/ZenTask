@@ -63,6 +63,20 @@ const userRoleBadge = document.getElementById('user-role-badge');
 const logoutBtn = document.getElementById('logout-btn');
 const themeIcon = document.getElementById('theme-icon');
 
+// Task Detail & Gemini Elements
+const taskDetailModal = document.getElementById('task-detail-modal');
+const detailTaskName = document.getElementById('detail-task-name');
+const detailTaskCheckbox = document.getElementById('detail-task-checkbox');
+const detailTaskPriority = document.getElementById('detail-task-priority');
+const detailTaskStatus = document.getElementById('detail-task-status');
+const detailTaskCategory = document.getElementById('detail-task-category');
+const closeDetailBtn = document.getElementById('close-detail-btn');
+const geminiChatHistory = document.getElementById('gemini-chat-history');
+const geminiInput = document.getElementById('gemini-input');
+const geminiSendBtn = document.getElementById('gemini-send-btn');
+
+const GEMINI_API_KEY = "YOUR_GEMINI_API_KEY"; // Placeholder - User should fill this
+
 // Mobile Menu Logic
 const mobileMenuBtn = document.getElementById('mobile-menu-btn');
 const sidebar = document.querySelector('.sidebar');
@@ -250,6 +264,12 @@ const createTaskElement = (task) => {
     `;
 
     // Events
+    li.querySelector('.task-content').addEventListener('click', (e) => {
+        if (!e.target.classList.contains('priority-dot')) {
+            openTaskDetail(task);
+        }
+    });
+
     li.querySelector('.priority-dot').addEventListener('click', (e) => {
         e.stopPropagation();
         cyclePriority(task.id, task.priority);
@@ -642,12 +662,115 @@ const initStatusFilters = () => {
     });
 };
 
+// --- Task Detail & Gemini Logic ---
+let activeTaskForDetail = null;
+
+const addChatMessage = (role, text) => {
+    const msg = document.createElement('div');
+    msg.className = `chat-message ${role}`;
+    msg.textContent = text;
+    geminiChatHistory.appendChild(msg);
+    geminiChatHistory.scrollTop = geminiChatHistory.scrollHeight;
+};
+
+const showGeminiLoading = () => {
+    const loading = document.createElement('div');
+    loading.className = 'loading-indicator ai';
+    loading.id = 'gemini-loading';
+    loading.innerHTML = '<div class="dot"></div><div class="dot"></div><div class="dot"></div>';
+    geminiChatHistory.appendChild(loading);
+    geminiChatHistory.scrollTop = geminiChatHistory.scrollHeight;
+};
+
+const hideGeminiLoading = () => {
+    const loading = document.getElementById('gemini-loading');
+    if (loading) loading.remove();
+};
+
+const askGemini = async (prompt) => {
+    if (!GEMINI_API_KEY || GEMINI_API_KEY === "YOUR_GEMINI_API_KEY") {
+        setTimeout(() => {
+            hideGeminiLoading();
+            addChatMessage('ai', "I'm ready to help! To activate my real AI powers, please add your Gemini API Key to app.js. (Simulated: I suggest breaking this task into manageable steps.)");
+        }, 1500);
+        return;
+    }
+
+    try {
+        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${GEMINI_API_KEY}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                contents: [{ parts: [{ text: prompt }] }]
+            })
+        });
+        const data = await response.json();
+        hideGeminiLoading();
+        if (data.candidates && data.candidates[0].content.parts[0].text) {
+            const aiResponse = data.candidates[0].content.parts[0].text;
+            addChatMessage('ai', aiResponse);
+        } else {
+            throw new Error("Empty response");
+        }
+    } catch (error) {
+        console.error("Gemini Error:", error);
+        hideGeminiLoading();
+        addChatMessage('ai', "Sorry, I encountered an error connecting to my neurons. Check your API key and connection.");
+    }
+};
+
+const openTaskDetail = (task) => {
+    activeTaskForDetail = task;
+    detailTaskName.textContent = task.text;
+    detailTaskCheckbox.checked = task.completed;
+    detailTaskPriority.textContent = task.priority;
+    detailTaskStatus.textContent = task.status || 'today';
+    detailTaskCategory.textContent = task.category || 'Ungrouped';
+
+    // Reset Chat
+    geminiChatHistory.innerHTML = '';
+    taskDetailModal.classList.add('active');
+
+    // Initial Prompt
+    addChatMessage('ai', `Hello! I see you want to: "${task.text}". How can I help you complete this efficiently?`);
+    showGeminiLoading();
+    askGemini(`The user has a task: "${task.text}". Provide a brief, helpful suggestion on how to start or complete this task efficiently.`);
+};
+
+const closeTaskDetail = () => {
+    taskDetailModal.classList.remove('active');
+    activeTaskForDetail = null;
+};
+
+geminiSendBtn.addEventListener('click', () => {
+    const text = geminiInput.value.trim();
+    if (!text) return;
+    addChatMessage('user', text);
+    geminiInput.value = '';
+    showGeminiLoading();
+    askGemini(text);
+});
+
+geminiInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') geminiSendBtn.click();
+});
+
+closeDetailBtn.addEventListener('click', closeTaskDetail);
+taskDetailModal.addEventListener('click', (e) => {
+    if (e.target === taskDetailModal) closeTaskDetail();
+});
+
+detailTaskCheckbox.addEventListener('change', () => {
+    if (activeTaskForDetail) toggleTask(activeTaskForDetail);
+});
+
 // Expose for debugging/tests
 window.ZenTask = {
     addTask,
     tasks: () => tasks,
     db,
-    auth
+    auth,
+    openTaskDetail
 };
 
 // Auth Event Listeners

@@ -114,7 +114,6 @@
         </section>
     </main>
 
-    <!-- Category Modal -->
     <div id="category-modal" class="modal-overlay">
         <div class="modal-content glass">
             <h2>New Group</h2>
@@ -125,6 +124,39 @@
             <div class="modal-actions">
                 <button id="modal-cancel-btn" class="secondary-btn">Cancel</button>
                 <button id="modal-create-btn" class="primary-btn">Create Group</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Task Detail Modal -->
+    <div id="task-detail-modal" class="modal-overlay">
+        <div class="modal-content task-detail-content glass">
+            <header class="detail-header">
+                <div class="detail-task-info">
+                    <input type="checkbox" id="detail-task-checkbox" class="task-checkbox">
+                    <div class="detail-task-meta">
+                        <h2 id="detail-task-name">Task Name</h2>
+                        <div class="meta-row">
+                            <span id="detail-task-priority" class="priority-badge">Medium</span>
+                            <span id="detail-task-status" class="status-indicator">Today</span>
+                            <span id="detail-task-category" class="category-indicator">Work</span>
+                        </div>
+                    </div>
+                </div>
+                <button id="close-detail-btn" class="close-btn">&times;</button>
+            </header>
+
+            <div class="gemini-container">
+                <div id="gemini-chat-history" class="chat-history">
+                    <!-- Chat messages will be here -->
+                </div>
+                <div class="chat-input-area">
+                    <input type="text" id="gemini-input" placeholder="Ask Gemini for help with this task..."
+                        autocomplete="off">
+                    <button id="gemini-send-btn">
+                        <span class="material-symbols-outlined">send</span>
+                    </button>
+                </div>
             </div>
         </div>
     </div>
