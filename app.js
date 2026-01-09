@@ -90,6 +90,7 @@ const GEMINI_API_KEY = window.API_CONFIG?.GEMINI_API_KEY ||
 const CLAUDE_API_KEY = window.API_CONFIG?.CLAUDE_API_KEY ||
     localStorage.getItem('zenClaudeKey') ||
     "YOUR_CLAUDE_API_KEY";
+const GEMINI_MODEL = 'gemini-1.5-flash-latest';
 let selectedAIProvider = localStorage.getItem('zenAIProvider') || 'gemini'; // 'gemini' or 'claude'
 
 // Debug: Check if API keys are loaded
@@ -884,7 +885,7 @@ const askGemini = async (prompt, attachment = null) => {
             });
         }
 
-        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${GEMINI_API_KEY}`, {
+        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${GEMINI_API_KEY}`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
