@@ -381,7 +381,7 @@ const renderTasks = () => {
 
         let matchesFilter = true;
         if (currentFilter.type === 'status') {
-            if (currentFilter.value === 'all') matchesFilter = true;
+            if (currentFilter.value === 'all') matchesFilter = !task.completed;
             else if (currentFilter.value === 'completed') matchesFilter = task.completed;
             else if (currentFilter.value === 'today') matchesFilter = !task.completed && (task.status === 'today' || !task.status);
             else if (currentFilter.value === 'upcoming') matchesFilter = !task.completed && task.status === 'upcoming';
