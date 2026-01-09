@@ -75,7 +75,7 @@ const geminiChatHistory = document.getElementById('gemini-chat-history');
 const geminiInput = document.getElementById('gemini-input');
 const geminiSendBtn = document.getElementById('gemini-send-btn');
 
-const GEMINI_API_KEY = "YOUR_GEMINI_API_KEY"; // Placeholder - User should fill this
+const GEMINI_API_KEY = "AIzaSyAjhxHz04LPBigV_8iexFfgqo79NRvatL8";
 
 // Mobile Menu Logic
 const mobileMenuBtn = document.getElementById('mobile-menu-btn');
