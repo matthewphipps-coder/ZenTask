@@ -579,7 +579,14 @@ body {
     margin-top: auto;
 }
 
-#theme-btn {
+.sidebar-footer-controls {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+}
+
+#theme-btn,
+#settings-btn {
     background: transparent;
     border: 1px solid var(--glass-border);
     color: var(--text-secondary);
@@ -593,10 +600,12 @@ body {
     align-items: center;
 }
 
-#theme-btn:hover {
+#theme-btn:hover,
+#settings-btn:hover {
     border-color: var(--text-primary);
     color: var(--text-primary);
 }
+
 
 /* Modal */
 .modal-overlay {
@@ -706,6 +715,83 @@ body {
 
 .error-message.visible {
     opacity: 1;
+}
+
+/* Settings Modal */
+.settings-section {
+    margin: 20px 0;
+    position: relative;
+}
+
+.settings-section label {
+    display: block;
+    margin-bottom: 8px;
+    text-align: left;
+}
+
+.settings-section strong {
+    display: block;
+    color: var(--text-primary);
+    margin-bottom: 4px;
+}
+
+.settings-section small {
+    display: block;
+    color: var(--text-secondary);
+    font-size: 12px;
+}
+
+.settings-section small a {
+    color: var(--accent-primary);
+    text-decoration: none;
+}
+
+.settings-section small a:hover {
+    text-decoration: underline;
+}
+
+.settings-section input {
+    width: 100%;
+    padding: 12px;
+    padding-right: 50px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--glass-border);
+    border-radius: 8px;
+    color: var(--text-primary);
+    font-size: 14px;
+    font-family: 'Courier New', monospace;
+}
+
+.settings-section input:focus {
+    outline: none;
+    border-color: var(--accent-primary);
+    background: rgba(255, 255, 255, 0.08);
+}
+
+.visibility-btn {
+    position: absolute;
+    right: 10px;
+    bottom: 10px;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    font-size: 18px;
+    opacity: 0.6;
+    transition: opacity 0.2s;
+}
+
+.visibility-btn:hover {
+    opacity: 1;
+}
+
+.settings-note {
+    font-size: 12px;
+    color: var(--text-secondary);
+    background: rgba(139, 92, 246, 0.1);
+    padding: 12px;
+    border-radius: 8px;
+    border-left: 3px solid var(--accent-primary);
+    margin: 20px 0;
 }
 
 /* Empty State */

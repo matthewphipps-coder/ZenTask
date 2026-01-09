@@ -76,9 +76,26 @@ const geminiInput = document.getElementById('gemini-input');
 const geminiSendBtn = document.getElementById('gemini-send-btn');
 
 // API Keys are now loaded from config.js (which is gitignored)
-const GEMINI_API_KEY = window.API_CONFIG?.GEMINI_API_KEY || "YOUR_GEMINI_API_KEY";
-const CLAUDE_API_KEY = window.API_CONFIG?.CLAUDE_API_KEY || "YOUR_CLAUDE_API_KEY";
+// For GitHub Pages or if config.js is missing, prompt user for API key
+const GEMINI_API_KEY = window.API_CONFIG?.GEMINI_API_KEY ||
+    localStorage.getItem('zenGeminiKey') ||
+    "YOUR_GEMINI_API_KEY";
+const CLAUDE_API_KEY = window.API_CONFIG?.CLAUDE_API_KEY ||
+    localStorage.getItem('zenClaudeKey') ||
+    "YOUR_CLAUDE_API_KEY";
 let selectedAIProvider = localStorage.getItem('zenAIProvider') || 'gemini'; // 'gemini' or 'claude'
+
+// Debug: Check if API keys are loaded
+console.log('API Config loaded:', window.API_CONFIG ? 'Yes' : 'No');
+console.log('Gemini API Key:', GEMINI_API_KEY ? (GEMINI_API_KEY.substring(0, 10) + '...') : 'Not set');
+
+// If no API key is set, prompt user (useful for GitHub Pages)
+if (!window.API_CONFIG && GEMINI_API_KEY === "YOUR_GEMINI_API_KEY") {
+    const savedKey = localStorage.getItem('zenGeminiKey');
+    if (!savedKey) {
+        console.log('No API key found. User will need to add it via settings or config.js');
+    }
+}
 
 // Mobile Menu Logic
 const mobileMenuBtn = document.getElementById('mobile-menu-btn');
@@ -861,6 +878,83 @@ if (logoutBtn) {
         } catch (error) {
             console.error("Logout error:", error);
         }
+    });
+}
+
+// Settings Modal Logic
+const settingsModal = document.getElementById('settings-modal');
+const settingsBtn = document.getElementById('settings-btn');
+const settingsCancelBtn = document.getElementById('settings-cancel-btn');
+const settingsSaveBtn = document.getElementById('settings-save-btn');
+const settingsGeminiInput = document.getElementById('settings-gemini-key');
+const settingsClaudeInput = document.getElementById('settings-claude-key');
+const toggleGeminiVisibility = document.getElementById('toggle-gemini-visibility');
+const toggleClaudeVisibility = document.getElementById('toggle-claude-visibility');
+
+// Open settings modal
+if (settingsBtn) {
+    settingsBtn.addEventListener('click', () => {
+        settingsModal.classList.add('active');
+        // Load current keys (masked)
+        const geminiKey = localStorage.getItem('zenGeminiKey') || '';
+        const claudeKey = localStorage.getItem('zenClaudeKey') || '';
+        settingsGeminiInput.value = geminiKey;
+        settingsClaudeInput.value = claudeKey;
+    });
+}
+
+// Close settings modal
+const closeSettingsModal = () => {
+    settingsModal.classList.remove('active');
+};
+
+if (settingsCancelBtn) {
+    settingsCancelBtn.addEventListener('click', closeSettingsModal);
+}
+
+// Click outside to close
+settingsModal.addEventListener('click', (e) => {
+    if (e.target === settingsModal) closeSettingsModal();
+});
+
+// Toggle password visibility
+if (toggleGeminiVisibility) {
+    toggleGeminiVisibility.addEventListener('click', () => {
+        const type = settingsGeminiInput.type === 'password' ? 'text' : 'password';
+        settingsGeminiInput.type = type;
+        toggleGeminiVisibility.textContent = type === 'password' ? '👁️' : '🙈';
+    });
+}
+
+if (toggleClaudeVisibility) {
+    toggleClaudeVisibility.addEventListener('click', () => {
+        const type = settingsClaudeInput.type === 'password' ? 'text' : 'password';
+        settingsClaudeInput.type = type;
+        toggleClaudeVisibility.textContent = type === 'password' ? '👁️' : '🙈';
+    });
+}
+
+// Save API keys
+if (settingsSaveBtn) {
+    settingsSaveBtn.addEventListener('click', () => {
+        const geminiKey = settingsGeminiInput.value.trim();
+        const claudeKey = settingsClaudeInput.value.trim();
+
+        // Save to localStorage
+        if (geminiKey) {
+            localStorage.setItem('zenGeminiKey', geminiKey);
+            console.log('✅ Gemini API key saved');
+        }
+        if (claudeKey) {
+            localStorage.setItem('zenClaudeKey', claudeKey);
+            console.log('✅ Claude API key saved');
+        }
+
+        closeSettingsModal();
+
+        // Show success message and reload
+        alert('API keys saved successfully! The page will reload to apply changes.');
+        window.location.reload();
     });
 }
 

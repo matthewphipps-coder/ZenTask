@@ -77,6 +77,9 @@
                     </div>
                 </div>
                 <div class="sidebar-footer-controls">
+                    <button id="settings-btn" title="API Settings">
+                        <span class="material-symbols-outlined">settings</span>
+                    </button>
                     <button id="theme-btn" title="Toggle Theme">
                         <span id="theme-icon" class="material-symbols-outlined">dark_mode</span>
                     </button>
@@ -167,6 +170,42 @@
                         <span class="material-symbols-outlined">send</span>
                     </button>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Settings Modal -->
+    <div id="settings-modal" class="modal-overlay">
+        <div class="modal-content glass">
+            <h2>⚙️ API Settings</h2>
+            <p>Configure your AI provider API keys. Keys are stored locally in your browser.</p>
+
+            <div class="settings-section">
+                <label for="settings-gemini-key">
+                    <strong>Gemini API Key</strong>
+                    <small>Get your key from <a href="https://aistudio.google.com/api-keys" target="_blank">Google AI
+                            Studio</a></small>
+                </label>
+                <input type="password" id="settings-gemini-key" placeholder="AIzaSy..." autocomplete="off">
+                <button id="toggle-gemini-visibility" class="visibility-btn" type="button">👁️</button>
+            </div>
+
+            <div class="settings-section">
+                <label for="settings-claude-key">
+                    <strong>Claude API Key</strong>
+                    <small>Get your key from <a href="https://console.anthropic.com/" target="_blank">Anthropic
+                            Console</a></small>
+                </label>
+                <input type="password" id="settings-claude-key" placeholder="sk-ant-..." autocomplete="off">
+                <button id="toggle-claude-visibility" class="visibility-btn" type="button">👁️</button>
+            </div>
+
+            <p class="settings-note">🔒 Your API keys are stored securely in your browser's localStorage and never sent
+                to our servers.</p>
+
+            <div class="modal-actions">
+                <button id="settings-cancel-btn" class="secondary-btn">Cancel</button>
+                <button id="settings-save-btn" class="primary-btn">Save Keys</button>
             </div>
         </div>
     </div>
