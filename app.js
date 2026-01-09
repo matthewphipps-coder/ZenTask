@@ -90,7 +90,7 @@ const GEMINI_API_KEY = window.API_CONFIG?.GEMINI_API_KEY ||
 const CLAUDE_API_KEY = window.API_CONFIG?.CLAUDE_API_KEY ||
     localStorage.getItem('zenClaudeKey') ||
     "YOUR_CLAUDE_API_KEY";
-const GEMINI_MODEL = 'gemini-1.5-flash-latest';
+const GEMINI_MODEL = 'gemini-2.5-flash';
 let selectedAIProvider = localStorage.getItem('zenAIProvider') || 'gemini'; // 'gemini' or 'claude'
 
 // Debug: Check if API keys are loaded
@@ -1255,35 +1255,6 @@ if (toggleClaudeVisibility) {
         const type = settingsClaudeInput.type === 'password' ? 'text' : 'password';
         settingsClaudeInput.type = type;
         toggleClaudeVisibility.textContent = type === 'password' ? '👁️' : '🙈';
-    });
-}
-
-// List Models Button
-const testGeminiBtn = document.getElementById('test-gemini-btn');
-if (testGeminiBtn) {
-    testGeminiBtn.addEventListener('click', async () => {
-        const key = settingsGeminiInput.value.trim() || GEMINI_API_KEY;
-        if (!key || key === "YOUR_GEMINI_API_KEY") {
-            alert('Please enter a valid Gemini API Key first.');
-            return;
-        }
-
-        testGeminiBtn.textContent = 'Checking...';
-        try {
-            const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${key}`);
-            const data = await response.json();
-
-            if (data.models) {
-                const modelNames = data.models.filter(m => m.supportedGenerationMethods.includes('generateContent')).map(m => m.name.replace('models/', '')).join('\n');
-                alert(`✅ Available Models:\n${modelNames}\n\nCurrent Config: ${GEMINI_MODEL}`);
-            } else {
-                alert(`❌ Error: ${JSON.stringify(data)}`);
-            }
-        } catch (error) {
-            alert(`❌ Connection Failed: ${error.message}`);
-        } finally {
-            testGeminiBtn.textContent = 'List Models';
-        }
     });
 }
 
