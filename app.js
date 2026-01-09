@@ -337,7 +337,29 @@ const renderTasks = () => {
                 <p>No tasks found.</p>
             </div>`;
     } else {
-        filteredTasks.forEach(task => taskList.appendChild(createTaskElement(task)));
+        if (currentFilter.type === 'status') {
+            // Group by category
+            const validCatNames = customCategories.map(c => c.name);
+            const ungrouped = filteredTasks.filter(t => !t.category || !validCatNames.includes(t.category));
+
+            // Ungrouped Tasks at the top
+            ungrouped.forEach(task => taskList.appendChild(createTaskElement(task)));
+
+            // Tasks grouped by category in sidebar order
+            customCategories.forEach(cat => {
+                const catTasks = filteredTasks.filter(t => t.category === cat.name);
+                if (catTasks.length > 0) {
+                    const header = document.createElement('div');
+                    header.className = 'group-title';
+                    header.textContent = cat.name;
+                    taskList.appendChild(header);
+                    catTasks.forEach(task => taskList.appendChild(createTaskElement(task)));
+                }
+            });
+        } else {
+            // Specific category filter - just list tasks
+            filteredTasks.forEach(task => taskList.appendChild(createTaskElement(task)));
+        }
     }
     updateStats();
 };
@@ -513,52 +535,41 @@ const reorderTasks = async (draggedId, targetId, position) => {
 
     if (!draggedTask || !targetTask) return;
 
-    // We only reorder physically in the list, then calculate order value
-    // Current tasks array is sorted by 'order' DESC.
-    // Index 0 has highest order value.
-    const targetIndex = tasks.findIndex(t => t.id === targetId);
+    // Get the visual list of IDs to find real neighbors in the current view
+    const visualCards = Array.from(taskList.querySelectorAll('.task-item'));
+    const visualIds = visualCards.map(c => c.dataset.id);
 
-    let newOrder;
-
-    // NOTE: tasks list is sorted DESC (newest/highest first)
-    // "Before" visually means "Higher Index"?? No.
-    // Visual: Top -> Bottom.
-    // List: [Item 0 (Order 100), Item 1 (Order 90)]
-    // Drop "Before" Item 1 means put it between 0 and 1. Order ~ 95.
-
-    // Let's get the neighbors based on Visual Position
-    // We already have the sorted 'tasks' array which mirrors visual.
-    let neighborPrev, neighborNext;
+    const targetIndex = visualIds.indexOf(targetId);
+    let neighborPrevId, neighborNextId;
 
     if (position === 'before') {
-        // Putting it above Target.
-        // Target is the "lower bound" of our slot in terms of visual index (it moves down).
-        // Actually: New visual index = targetIndex.
-        // We need order between targetIndex-1 and targetIndex.
-        neighborPrev = tasks[targetIndex - 1]; // Task above
-        neighborNext = tasks[targetIndex];     // Task below (the target)
-
+        neighborPrevId = visualIds[targetIndex - 1];
+        neighborNextId = targetId;
     } else {
-        // Putting it after Target.
-        // New visual index = targetIndex + 1.
-        neighborPrev = tasks[targetIndex];     // Task above (the target)
-        neighborNext = tasks[targetIndex + 1]; // Task below
+        neighborPrevId = targetId;
+        neighborNextId = visualIds[targetIndex + 1];
     }
 
-    // Edge Cases
+    const neighborPrev = tasks.find(t => t.id === neighborPrevId);
+    const neighborNext = tasks.find(t => t.id === neighborNextId);
+
+    let newOrder;
     if (!neighborPrev) {
-        // We are at the very top. New order = neighborNext.order + 1000?
-        // Or if both null?
         newOrder = (neighborNext ? neighborNext.order : Date.now()) + 100000;
     } else if (!neighborNext) {
-        // We are at the very bottom.
         newOrder = neighborPrev.order - 100000;
     } else {
-        // Between two
         newOrder = (neighborPrev.order + neighborNext.order) / 2;
     }
 
-    updateDoc(doc(db, "tasks", draggedId), { order: newOrder });
+    const updates = { order: newOrder };
+
+    // Update category if it moved to a different group
+    if (draggedTask.category !== targetTask.category) {
+        updates.category = targetTask.category || null;
+    }
+
+    await updateDoc(doc(db, "tasks", draggedId), updates);
 };
 
 

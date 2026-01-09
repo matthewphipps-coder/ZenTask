@@ -360,6 +360,26 @@ body {
     gap: 8px;
 }
 
+.group-title {
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    color: var(--text-secondary);
+    opacity: 0.5;
+    margin: 24px 0 8px 4px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.group-title::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: linear-gradient(to right, var(--glass-border), transparent);
+}
+
 .task-item {
     display: flex;
     align-items: center;
