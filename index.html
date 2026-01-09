@@ -23,6 +23,12 @@
 </head>
 
 <body>
+    <!-- Dummy inputs to prevent Chrome autofill -->
+    <div style="height:0; overflow:hidden; position:absolute; top:-10000px;">
+        <input type="text" name="fake_username_trap" tabindex="-1">
+        <input type="password" name="fake_password_trap" tabindex="-1">
+    </div>
+
     <canvas id="confetti-canvas"></canvas>
     <canvas id="stars-canvas"></canvas>
     <div class="app-background"></div>
@@ -216,7 +222,8 @@
                     <small>Get your key from <a href="https://aistudio.google.com/api-keys" target="_blank">Google AI
                             Studio</a></small>
                 </label>
-                <input type="password" id="settings-gemini-key" placeholder="AIzaSy..." autocomplete="off">
+                <input type="password" id="settings-gemini-key" name="zen_gemini_api_key" placeholder="AIzaSy..."
+                    autocomplete="new-password">
                 <button id="toggle-gemini-visibility" class="visibility-btn" type="button">👁️</button>
             </div>
 
@@ -226,7 +233,8 @@
                     <small>Get your key from <a href="https://console.anthropic.com/" target="_blank">Anthropic
                             Console</a></small>
                 </label>
-                <input type="password" id="settings-claude-key" placeholder="sk-ant-..." autocomplete="off">
+                <input type="password" id="settings-claude-key" name="zen_claude_api_key" placeholder="sk-ant-..."
+                    autocomplete="new-password">
                 <button id="toggle-claude-visibility" class="visibility-btn" type="button">👁️</button>
             </div>
 
