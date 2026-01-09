@@ -1258,6 +1258,35 @@ if (toggleClaudeVisibility) {
     });
 }
 
+// List Models Button
+const testGeminiBtn = document.getElementById('test-gemini-btn');
+if (testGeminiBtn) {
+    testGeminiBtn.addEventListener('click', async () => {
+        const key = settingsGeminiInput.value.trim() || GEMINI_API_KEY;
+        if (!key || key === "YOUR_GEMINI_API_KEY") {
+            alert('Please enter a valid Gemini API Key first.');
+            return;
+        }
+
+        testGeminiBtn.textContent = 'Checking...';
+        try {
+            const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${key}`);
+            const data = await response.json();
+
+            if (data.models) {
+                const modelNames = data.models.filter(m => m.supportedGenerationMethods.includes('generateContent')).map(m => m.name.replace('models/', '')).join('\n');
+                alert(`✅ Available Models:\n${modelNames}\n\nCurrent Config: ${GEMINI_MODEL}`);
+            } else {
+                alert(`❌ Error: ${JSON.stringify(data)}`);
+            }
+        } catch (error) {
+            alert(`❌ Connection Failed: ${error.message}`);
+        } finally {
+            testGeminiBtn.textContent = 'List Models';
+        }
+    });
+}
+
 // Save API keys
 if (settingsSaveBtn) {
     settingsSaveBtn.addEventListener('click', () => {
