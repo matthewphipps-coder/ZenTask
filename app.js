@@ -950,7 +950,7 @@ const openTaskDetail = (task) => {
     activeTaskForDetail = task;
 
     // Set task name and checkbox
-    detailTaskName.textContent = task.text;
+    detailTaskName.value = task.text;
     detailTaskCheckbox.checked = task.completed;
 
     // Set priority dropdown
@@ -1029,6 +1029,16 @@ taskDetailModal.addEventListener('click', (e) => {
 
 detailTaskCheckbox.addEventListener('change', () => {
     if (activeTaskForDetail) toggleTask(activeTaskForDetail);
+});
+
+detailTaskName.addEventListener('change', async () => {
+    if (activeTaskForDetail && detailTaskName.value.trim()) {
+        await updateDoc(doc(db, "tasks", activeTaskForDetail.id), { text: detailTaskName.value.trim() });
+    }
+});
+
+detailTaskName.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') detailTaskName.blur();
 });
 
 // Task detail field changes - auto-save

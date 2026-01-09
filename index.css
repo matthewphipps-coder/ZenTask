@@ -1174,14 +1174,23 @@ body {
 
 
 
-.detail-task-info h2 {
-    margin: 0;
+.task-name-input {
+    background: transparent;
+    border: none;
+    outline: none;
     font-size: 22px;
     font-weight: 600;
     font-family: 'Outfit', sans-serif;
     color: var(--text-primary);
+    width: 100%;
+    padding: 4px 0;
+    border-bottom: 2px solid transparent;
+    transition: all 0.2s;
     line-height: 1.2;
-    text-align: left;
+}
+
+.task-name-input:focus {
+    border-bottom-color: var(--accent-primary);
 }
 
 .close-btn {
