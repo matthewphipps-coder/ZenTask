@@ -641,8 +641,13 @@ window.ZenTask = {
 
 // Auth Event Listeners
 if (logoutBtn) {
-    logoutBtn.addEventListener('click', () => {
-        if (confirm('Logout?')) signOut(auth);
+    logoutBtn.addEventListener('click', async () => {
+        try {
+            await signOut(auth);
+            // Redirection is handled by onAuthStateChanged
+        } catch (error) {
+            console.error("Logout error:", error);
+        }
     });
 }
 

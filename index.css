@@ -905,7 +905,7 @@ body {
 .sidebar-footer-controls {
     display: flex;
     align-items: center;
-    justify-content: center;
+    justify-content: flex-start;
     gap: 8px;
     padding-top: 4px;
 }
