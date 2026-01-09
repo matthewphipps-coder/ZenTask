@@ -991,8 +991,6 @@ const openTaskDetail = (task) => {
     // Set task name and checkbox
     detailTaskName.value = task.text;
     detailTaskName.readOnly = true;
-    detailTaskName.style.height = 'auto';
-    detailTaskName.style.height = (detailTaskName.scrollHeight < 32 ? 32 : detailTaskName.scrollHeight) + 'px'; // Auto-resize initial
     detailTaskCheckbox.checked = task.completed;
 
     // Set priority dropdown
@@ -1035,10 +1033,12 @@ const openTaskDetail = (task) => {
 
     taskDetailModal.classList.add('active');
 
-    // Scroll to bottom after layout update
+    // Scroll to bottom after layout update and fix textarea height
     setTimeout(() => {
+        detailTaskName.style.height = 'auto';
+        detailTaskName.style.height = (detailTaskName.scrollHeight) + 'px';
         geminiChatHistory.scrollTop = geminiChatHistory.scrollHeight;
-    }, 0);
+    }, 10);
 };
 
 
