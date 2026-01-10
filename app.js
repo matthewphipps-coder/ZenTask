@@ -1,7 +1,7 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 import { getFirestore, collection, addDoc, updateDoc, deleteDoc, doc, onSnapshot, query, where, orderBy, writeBatch, serverTimestamp, enableIndexedDbPersistence, getDoc, setDoc, arrayUnion } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-import { AGENT_UPDATE } from './agent_updates.js?v=4';
+import { AGENT_UPDATE } from './agent_updates.js?v=5';
 
 const firebaseConfig = {
     apiKey: "AIzaSyAUJwnbz_fwtNF1i2NSbLyjYOg9GdbTZAk",
@@ -285,7 +285,7 @@ const setupListeners = (user, role) => {
         migrateDataIfNeeded(userId);
         renderTasks();
         try {
-            if (AGENT_UPDATE) processAgentUpdate(AGENT_UPDATE); // Safe call
+            if (AGENT_UPDATE) processAgentUpdate(AGENT_UPDATE); // Sync call (fire and forget)
         } catch (e) { console.error("Agent Update Error:", e); }
     }, (error) => {
         console.error("Firestore Tasks Error:", error);
@@ -1381,4 +1381,15 @@ initStatusFilters();
 // --- Agent Link Integration ---
 
 
-// (Auth listener removed - logic moved to snapshot)
+// --- Ant-Link Live Polling ---
+setInterval(async () => {
+    try {
+        const bust = Date.now();
+        const module = await import(`./agent_updates.js?v=${bust}`);
+        if (module && module.AGENT_UPDATE) {
+            await processAgentUpdate(module.AGENT_UPDATE);
+        }
+    } catch (e) {
+        // console.debug("Poll failed", e);
+    }
+}, 4000);
