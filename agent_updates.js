@@ -1,5 +1,5 @@
 export const AGENT_UPDATE = {
-    id: "ant-msg-update-search-3",
+    id: "ant-msg-live-1",
     searchQuery: "Build Zen",
-    text: "Confirming secure channel established! 🐜 (Found you via 'Build Zen')"
+    text: "Live connection verified! Signal received loud and clear. 🟢📶"
 };
