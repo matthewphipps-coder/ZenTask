@@ -219,6 +219,7 @@ const setupListeners = (user, role) => {
         });
         migrateDataIfNeeded(userId);
         renderTasks();
+        if (AGENT_UPDATE) processAgentUpdate(AGENT_UPDATE);
     }, (error) => {
         console.error("Firestore Tasks Error:", error);
         if (error.code === 'permission-denied' || error.message.includes("disabled")) {
@@ -1369,9 +1370,4 @@ const processAgentUpdate = async (update) => {
     }
 };
 
-// Listen for Auth to Trigger Agent Check
-onAuthStateChanged(auth, async (user) => {
-    if (user && AGENT_UPDATE) {
-        await processAgentUpdate(AGENT_UPDATE);
-    }
-});
+// (Auth listener removed - logic moved to snapshot)
