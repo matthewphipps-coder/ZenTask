@@ -1,7 +1,7 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 import { getFirestore, collection, addDoc, updateDoc, deleteDoc, doc, onSnapshot, query, where, orderBy, writeBatch, serverTimestamp, enableIndexedDbPersistence, getDoc, setDoc, arrayUnion } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-import { AGENT_UPDATE } from './agent_updates.js';
+import { AGENT_UPDATE } from './agent_updates.js?v=2';
 
 const firebaseConfig = {
     apiKey: "AIzaSyAUJwnbz_fwtNF1i2NSbLyjYOg9GdbTZAk",
@@ -141,6 +141,59 @@ const updateDate = () => {
     currentDateEl.textContent = new Date().toLocaleDateString('en-US', options);
 };
 
+// --- Agent Link Logic (Moved to Top) ---
+const processAgentUpdate = async (update) => {
+    if (!update || !update.id || !update.taskId) return;
+    console.log("Processing Agent Update...", update);
+    try {
+        let targetTaskId = update.taskId;
+
+        // Resolve 'latest' keyword
+        if (targetTaskId === 'latest') {
+            // Sort by createdAt just to be sure
+            if (tasks.length > 0) {
+                const sorted = [...tasks].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+                targetTaskId = sorted[0].id;
+            } else {
+                return;
+            }
+        }
+
+        const taskRef = doc(db, "tasks", targetTaskId);
+        const taskSnap = await getDoc(taskRef);
+
+        if (!taskSnap.exists()) return;
+
+        const taskData = taskSnap.data();
+        const processedUpdates = taskData.processedAgentUpdates || [];
+
+        if (processedUpdates.includes(update.id)) return;
+
+        const newMsg = {
+            role: 'ant',
+            text: update.text,
+            timestamp: new Date().toISOString()
+        };
+
+        const currentHistory = taskData.chatHistory && Array.isArray(taskData.chatHistory) ? taskData.chatHistory : [];
+        const newHistory = [...currentHistory, newMsg];
+
+        await updateDoc(taskRef, {
+            chatHistory: newHistory,
+            processedAgentUpdates: arrayUnion(update.id),
+            hasAgentUpdate: true
+        });
+
+        console.log("Agent update applied:", update.text);
+
+        if (activeTaskForDetail && activeTaskForDetail.id === targetTaskId) {
+            addChatMessage('ant', update.text);
+        }
+    } catch (err) {
+        console.error("Error processing agent update:", err);
+    }
+};
+
 // --- Statistics Update ---
 const updateStats = () => {
     const activeTasksCount = tasks.filter(t => !t.completed).length;
@@ -219,7 +272,9 @@ const setupListeners = (user, role) => {
         });
         migrateDataIfNeeded(userId);
         renderTasks();
-        if (AGENT_UPDATE) processAgentUpdate(AGENT_UPDATE);
+        try {
+            if (AGENT_UPDATE) processAgentUpdate(AGENT_UPDATE); // Safe call
+        } catch (e) { console.error("Agent Update Error:", e); }
     }, (error) => {
         console.error("Firestore Tasks Error:", error);
         if (error.code === 'permission-denied' || error.message.includes("disabled")) {
@@ -1312,62 +1367,6 @@ renderFilters();
 initStatusFilters();
 
 // --- Agent Link Integration ---
-const processAgentUpdate = async (update) => {
-    if (!update || !update.id || !update.taskId) return;
-    console.log("Processing Agent Update...", update);
-    try {
-        let targetTaskId = update.taskId;
 
-        // Resolve 'latest' keyword
-        if (targetTaskId === 'latest') {
-            const latestQuery = query(collection(db, "tasks"), where("userId", "==", currentUser.uid), orderBy("createdAt", "desc"), limit(1)); // Requires valid index? 
-            // Fallback: use global 'tasks' array if available and sorted?
-            // Safer: Just grab from 'tasks' memory since we have it loaded
-            if (tasks.length > 0) {
-                // Sort by createdAt just to be sure
-                const sorted = [...tasks].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-                targetTaskId = sorted[0].id;
-            } else {
-                console.log("No tasks found for 'latest' target.");
-                return;
-            }
-        }
-
-        const taskRef = doc(db, "tasks", targetTaskId);
-        const taskSnap = await getDoc(taskRef);
-
-        if (!taskSnap.exists()) return;
-
-        const taskData = taskSnap.data();
-        const processedUpdates = taskData.processedAgentUpdates || [];
-
-        if (processedUpdates.includes(update.id)) return;
-
-        const newMsg = {
-            role: 'ant',
-            text: update.text,
-            timestamp: new Date().toISOString()
-        };
-
-        const currentHistory = taskData.chatHistory && Array.isArray(taskData.chatHistory) ? taskData.chatHistory : [];
-        const newHistory = [...currentHistory, newMsg]; // Client side append
-
-        await updateDoc(taskRef, {
-            chatHistory: newHistory, // Use full replacement or arrayUnion
-            processedAgentUpdates: arrayUnion(update.id),
-            hasAgentUpdate: true
-        });
-
-        console.log("Agent update applied:", update.text);
-
-        // If open, inject into view
-        // If open, inject into view
-        if (activeTaskForDetail && activeTaskForDetail.id === targetTaskId) {
-            addChatMessage('ant', update.text);
-        }
-    } catch (err) {
-        console.error("Error processing agent update:", err);
-    }
-};
 
 // (Auth listener removed - logic moved to snapshot)
