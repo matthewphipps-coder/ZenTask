@@ -143,13 +143,23 @@ const updateDate = () => {
 
 // --- Agent Link Logic (Moved to Top) ---
 const processAgentUpdate = async (update) => {
-    if (!update || !update.id || !update.taskId) return;
+    if (!update || !update.id) return;
     console.log("Processing Agent Update...", update);
     try {
         let targetTaskId = update.taskId;
 
-        // Resolve 'latest' keyword
-        if (targetTaskId === 'latest') {
+        // Mode: Search by Text (Prioritized)
+        if (update.searchQuery) {
+            const match = tasks.find(t => t.text && t.text.toLowerCase().includes(update.searchQuery.toLowerCase()));
+            if (match) {
+                targetTaskId = match.id;
+            } else {
+                console.log("Agent Link: No task found matching search:", update.searchQuery);
+                return;
+            }
+        }
+        // Mode: Latest
+        else if (targetTaskId === 'latest') {
             // Sort by createdAt just to be sure
             if (tasks.length > 0) {
                 const sorted = [...tasks].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
@@ -158,6 +168,8 @@ const processAgentUpdate = async (update) => {
                 return;
             }
         }
+
+        if (!targetTaskId) return;
 
         const taskRef = doc(db, "tasks", targetTaskId);
         const taskSnap = await getDoc(taskRef);
