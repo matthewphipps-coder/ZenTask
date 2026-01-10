@@ -1,6 +1,7 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-import { getFirestore, collection, addDoc, updateDoc, deleteDoc, doc, onSnapshot, query, where, orderBy, writeBatch, serverTimestamp, enableIndexedDbPersistence, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { getFirestore, collection, addDoc, updateDoc, deleteDoc, doc, onSnapshot, query, where, orderBy, writeBatch, serverTimestamp, enableIndexedDbPersistence, getDoc, setDoc, arrayUnion } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { AGENT_UPDATE } from './agent_updates.js';
 
 const firebaseConfig = {
     apiKey: "AIzaSyAUJwnbz_fwtNF1i2NSbLyjYOg9GdbTZAk",
@@ -285,10 +286,11 @@ onAuthStateChanged(auth, async (user) => {
 
 const createTaskElement = (task) => {
     const li = document.createElement('li');
-    li.className = `task-item ${task.completed ? 'completed' : ''} priority-${task.priority}`;
-    li.dataset.id = task.id;
+    li.className = `task-item ${task.status === 'upcoming' ? 'upcoming' : ''}`;
+    if (task.completed) li.classList.add('completed');
+    if (task.hasAgentUpdate) li.classList.add('agent-update');
     li.draggable = true;
-
+    li.dataset.id = task.id;
     li.innerHTML = `
         <input type="checkbox" class="task-checkbox" ${task.completed ? 'checked' : ''}>
         <div class="task-content">
@@ -992,6 +994,15 @@ const askAI = async (prompt, attachment = null) => {
 const openTaskDetail = (task) => {
     activeTaskForDetail = task;
 
+    // Clear Agent Update Flag
+    if (task.hasAgentUpdate) {
+        updateDoc(doc(db, "tasks", task.id), { hasAgentUpdate: false });
+        task.hasAgentUpdate = false;
+        // Visual refresh in list handled by next render or just class toggle
+        const listItem = document.querySelector(`.task-item[data-id="${task.id}"]`);
+        if (listItem) listItem.classList.remove('agent-update');
+    }
+
     // Set task name and checkbox
     detailTaskName.value = task.text;
     detailTaskName.readOnly = true;
@@ -1298,3 +1309,51 @@ if (settingsSaveBtn) {
 updateDate();
 renderFilters();
 initStatusFilters();
+
+// --- Agent Link Integration ---
+const processAgentUpdate = async (update) => {
+    if (!update || !update.id || !update.taskId) return;
+    console.log("Processing Agent Update...", update);
+    try {
+        const taskRef = doc(db, "tasks", update.taskId);
+        const taskSnap = await getDoc(taskRef);
+
+        if (!taskSnap.exists()) return;
+
+        const taskData = taskSnap.data();
+        const processedUpdates = taskData.processedAgentUpdates || [];
+
+        if (processedUpdates.includes(update.id)) return;
+
+        const newMsg = {
+            role: 'ant',
+            text: update.text,
+            timestamp: new Date().toISOString()
+        };
+
+        const currentHistory = taskData.chatHistory && Array.isArray(taskData.chatHistory) ? taskData.chatHistory : [];
+        const newHistory = [...currentHistory, newMsg]; // Client side append
+
+        await updateDoc(taskRef, {
+            chatHistory: newHistory, // Use full replacement or arrayUnion
+            processedAgentUpdates: arrayUnion(update.id),
+            hasAgentUpdate: true
+        });
+
+        console.log("Agent update applied:", update.text);
+
+        // If open, inject into view
+        if (activeTaskForDetail && activeTaskForDetail.id === update.taskId) {
+            addChatMessage('ant', update.text);
+        }
+    } catch (err) {
+        console.error("Error processing agent update:", err);
+    }
+};
+
+// Listen for Auth to Trigger Agent Check
+onAuthStateChanged(auth, async (user) => {
+    if (user && AGENT_UPDATE) {
+        await processAgentUpdate(AGENT_UPDATE);
+    }
+});
