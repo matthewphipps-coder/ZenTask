@@ -435,10 +435,12 @@ body {
     position: absolute;
     left: 10px;
     right: 10px;
-    height: 4px;
-    background: #a855f7;
-    /* High-visibility vibrant purple */
-    box-shadow: 0 0 20px 2px rgba(168, 85, 247, 0.8), 0 0 5px rgba(168, 85, 247, 1);
+    height: 2px;
+    /* Thinner */
+    background: var(--accent-primary);
+    /* Green */
+    /* Reduced glow */
+    box-shadow: 0 0 10px 1px rgba(98, 216, 78, 0.6);
     border-radius: 10px;
     pointer-events: none;
     z-index: 1000;
@@ -456,9 +458,9 @@ body {
 /* Visual feedback on the card itself without shifting layout */
 .task-item.drag-over-top,
 .task-item.drag-over-bottom {
-    background: rgba(139, 92, 246, 0.15) !important;
-    border-color: rgba(139, 92, 246, 0.5) !important;
-    box-shadow: 0 0 15px rgba(139, 92, 246, 0.2);
+    background: rgba(98, 216, 78, 0.08) !important;
+    border-color: rgba(98, 216, 78, 0.4) !important;
+    box-shadow: 0 0 10px rgba(98, 216, 78, 0.15);
 }
 
 
@@ -767,6 +769,14 @@ body {
     background: var(--accent-primary);
     color: white;
     outline: none;
+    transition: all 0.2s;
+}
+
+.primary-btn:hover {
+    background: #50c43f;
+    /* Slightly adjusted green */
+    box-shadow: 0 0 15px rgba(98, 216, 78, 0.4);
+    transform: translateY(-1px);
 }
 
 .primary-btn:active,
