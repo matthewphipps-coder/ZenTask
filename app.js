@@ -1315,7 +1315,24 @@ const processAgentUpdate = async (update) => {
     if (!update || !update.id || !update.taskId) return;
     console.log("Processing Agent Update...", update);
     try {
-        const taskRef = doc(db, "tasks", update.taskId);
+        let targetTaskId = update.taskId;
+
+        // Resolve 'latest' keyword
+        if (targetTaskId === 'latest') {
+            const latestQuery = query(collection(db, "tasks"), where("userId", "==", currentUser.uid), orderBy("createdAt", "desc"), limit(1)); // Requires valid index? 
+            // Fallback: use global 'tasks' array if available and sorted?
+            // Safer: Just grab from 'tasks' memory since we have it loaded
+            if (tasks.length > 0) {
+                // Sort by createdAt just to be sure
+                const sorted = [...tasks].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+                targetTaskId = sorted[0].id;
+            } else {
+                console.log("No tasks found for 'latest' target.");
+                return;
+            }
+        }
+
+        const taskRef = doc(db, "tasks", targetTaskId);
         const taskSnap = await getDoc(taskRef);
 
         if (!taskSnap.exists()) return;
@@ -1343,7 +1360,8 @@ const processAgentUpdate = async (update) => {
         console.log("Agent update applied:", update.text);
 
         // If open, inject into view
-        if (activeTaskForDetail && activeTaskForDetail.id === update.taskId) {
+        // If open, inject into view
+        if (activeTaskForDetail && activeTaskForDetail.id === targetTaskId) {
             addChatMessage('ant', update.text);
         }
     } catch (err) {
