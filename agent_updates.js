@@ -1,5 +1,5 @@
 export const AGENT_UPDATE = {
-    id: "ant-msg-goodnight-1",
+    id: "ant-msg-welcome-back-1",
     searchQuery: "Build Zen",
-    text: "Great session tonight, Matt! Sleep well. I'll be here when you're back. 🌙🐜"
+    text: "Welcome back, Matt! 🐜⚡️ Systems online and ready to crush some code."
 };
